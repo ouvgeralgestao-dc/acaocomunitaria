@@ -1,0 +1,39 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": 82,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -43.2986053,
+              -22.7604162
+            ],
+            [
+              -43.3020586,
+              -22.7593388
+            ],
+            [
+              -43.30442,
+              -22.7658049
+            ],
+            [
+              -43.3009606,
+              -22.7668863
+            ],
+            [
+              -43.2986053,
+              -22.7604162
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "neighborhood": "Morro dos Remidos"
+      }
+    }
+  ]
+}
