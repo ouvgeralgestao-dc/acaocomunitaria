@@ -1,0 +1,4 @@
+Salve a imagem do logotipo do SIMAC nesta pasta com o nome de:
+logo.png
+
+O index.html está configurado para carregar automaticamente a imagem 'src/assets/logo.png' com fallback dinâmico para texto.

@@ -1,0 +1,514 @@
+{
+  "21010290": {
+    "logradouro": "Rua Mar Grande",
+    "bairro": "Cordovil",
+    "localidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "ibge": "3304557",
+    "ddd": "21"
+  },
+  "21011000": {
+    "logradouro": "Rua do Alho",
+    "bairro": "Penha Circular",
+    "localidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "ibge": "3304557",
+    "ddd": "21"
+  },
+  "21240690": {
+    "logradouro": "Rua Alvarenga Peixoto",
+    "bairro": "Vigário Geral",
+    "localidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "ibge": "3304557",
+    "ddd": "21"
+  },
+  "25010010": {
+    "logradouro": "Rua Almirante Barroso",
+    "bairro": "Jardim Vinte e Cinco de Agosto",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25010060": {
+    "logradouro": "Rua Genaro Lomba",
+    "bairro": "Centro",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25010080": {
+    "logradouro": "Rua Mariano Sendra dos Santos",
+    "bairro": "Centro",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25015440": {
+    "logradouro": "Rua Bernardino Machado",
+    "bairro": "Parque Lafaiete",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25025010": {
+    "logradouro": "Avenida Perimetral Doutor Manoel Reis",
+    "bairro": "Vila Meriti",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25025330": {
+    "logradouro": "Avenida Manuel Lucas",
+    "bairro": "Parque Senhor do Bonfim",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25025500": {
+    "logradouro": "Rua Covanca",
+    "bairro": "Parque Lafaiete",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25030040": {
+    "logradouro": "Rua Doutor Otávio Ascoli",
+    "bairro": "Vila Centenário",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25030130": {
+    "logradouro": "Avenida Joaquim Nabuco",
+    "bairro": "Parque Senhor do Bonfim",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25035008": {
+    "logradouro": "Avenida Governador Leonel de Moura Brizola",
+    "bairro": "Vila Leopoldina",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25035251": {
+    "logradouro": "Avenida Perimetral Pedro Lessa",
+    "bairro": "Gramacho",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25035680": {
+    "logradouro": "Rua Freire Alemão",
+    "bairro": "Olavo Bilac",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25035755": {
+    "logradouro": "Avenida Perimetral Pedro Lessa",
+    "bairro": "Olavo Bilac",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25036485": {
+    "logradouro": "Rua J J Seabra",
+    "bairro": "Olavo Bilac",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25040004": {
+    "logradouro": "Avenida Governador Leonel de Moura Brizola",
+    "bairro": "São Bento",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25040610": {
+    "logradouro": "Estrada Calundu",
+    "bairro": "Nossa Senhora do Carmo",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25045366": {
+    "logradouro": "Rua Beira Linha",
+    "bairro": "Jardim Vila Nova",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25050007": {
+    "logradouro": "Rua Topázios",
+    "bairro": "Vila Sarapuí",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25050110": {
+    "logradouro": "Rua do Chumbo",
+    "bairro": "Vila Sarapuí",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25050580": {
+    "logradouro": "Avenida Chopin",
+    "bairro": "Jardim Gramacho",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25050630": {
+    "logradouro": "Rua Amambai",
+    "bairro": "Vila Sarapuí",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25051230": {
+    "logradouro": "Rua Zezita Cruz de Sales",
+    "bairro": "Jardim Gramacho",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25056250": {
+    "logradouro": "Rua Remanso",
+    "bairro": "Jardim Gramacho",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25056340": {
+    "logradouro": "Rua Manaus",
+    "bairro": "Jardim Gramacho",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25060220": {
+    "logradouro": "Rua Doutor Laureano",
+    "bairro": "Vila São Luís",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25060280": {
+    "logradouro": "Rua João Alves Torres Filho",
+    "bairro": "Vila Leopoldina",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25065050": {
+    "logradouro": "Rua General Manoel Rabelo",
+    "bairro": "Vila São Luís",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25065100": {
+    "logradouro": "Praça Bandeira",
+    "bairro": "Vila São Luís",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25065175": {
+    "logradouro": "Avenida Leandro da Mota",
+    "bairro": "Vila São Sebastião",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25065240": {
+    "logradouro": "Praça João Caetano",
+    "bairro": "Vila São Luís",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25070050": {
+    "logradouro": "Rua Coronel Franca Soares",
+    "bairro": "Circular",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25070170": {
+    "logradouro": "Rua Itacibá",
+    "bairro": "Vila Itamarati",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25070260": {
+    "logradouro": "Rua Itabira",
+    "bairro": "Vila Itamarati",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25071182": {
+    "logradouro": "Avenida Perimetral Brigadeiro Lima e Silva",
+    "bairro": "Jardim Vinte e Cinco de Agosto",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25075030": {
+    "logradouro": "Rua Voluntários da Pátria",
+    "bairro": "Jardim Vinte e Cinco de Agosto",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25080700": {
+    "logradouro": "Praça Carlos de Laet",
+    "bairro": "Chacrinha",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25085220": {
+    "logradouro": "Avenida Beira Mar",
+    "bairro": "Parque Beira Mar",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25085240": {
+    "logradouro": "Rua Carlos de Carvalho",
+    "bairro": "Parque Beira Mar",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25085275": {
+    "logradouro": "Rua Gama Lobo",
+    "bairro": "Parque Beira Mar",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25211000": {
+    "logradouro": "Rodovia Santos-Dumont",
+    "bairro": "Jardim Primavera",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25211340": {
+    "logradouro": "Rua Londrina",
+    "bairro": "Parque São Pedro de Alcantara",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25212668": {
+    "logradouro": "Rua Severino Santos",
+    "bairro": "Parque Uruguaiana",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25213020": {
+    "logradouro": "Rua das Andorinhas",
+    "bairro": "Chácaras Rio-Petrópolis",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25215242": {
+    "logradouro": "Rua B",
+    "bairro": "Jardim Primavera",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25220720": {
+    "logradouro": "Avenida Pio XII",
+    "bairro": "Jardim Líder",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25221133": {
+    "logradouro": "Rua Almirante Custódio de Melo",
+    "bairro": "Jardim Balneário Ana Clara",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25230480": {
+    "logradouro": "Avenida Dona Tereza Cristina",
+    "bairro": "Chácaras Rio-Petrópolis",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25235000": {
+    "logradouro": "Rua Julieta Ana da Fonseca",
+    "bairro": "Pilar",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25245020": {
+    "logradouro": "Rua Canárias",
+    "bairro": "Chácaras Rio-Petrópolis",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25250000": {
+    "logradouro": "Rua Pastor Manuel Avelino de Souza",
+    "bairro": "Vila Santa Alice",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25250040": {
+    "logradouro": "Praça Engenheiro Leão de Moura",
+    "bairro": "Vila Nossa Senhora das Graças",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25251560": {
+    "logradouro": "Rua Nadir",
+    "bairro": "Chácaras Arcampo",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25255030": {
+    "logradouro": "Avenida Automóvel Clube",
+    "bairro": "Vila Santa Cruz",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25255135": {
+    "logradouro": "Rua Gironda",
+    "bairro": "Vila Canaan",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25255300": {
+    "logradouro": "Rua Antonina",
+    "bairro": "Vila Canaan",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25265008": {
+    "logradouro": "Rodovia Washington Luiz",
+    "bairro": "Santa Cruz da Serra",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25270320": {
+    "logradouro": "Rua Dez",
+    "bairro": "Taquara",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25272405": {
+    "logradouro": "Avenida Automóvel Clube",
+    "bairro": "Parada Angélica",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25272660": {
+    "logradouro": "Rua Aspásia",
+    "bairro": "Vila Bernadete",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "25275200": {
+    "logradouro": "Avenida Alexandre Fleming",
+    "bairro": "Parque Estrela",
+    "localidade": "Duque de Caxias",
+    "uf": "RJ",
+    "ibge": "3301702",
+    "ddd": "21"
+  },
+  "26112055": {
+    "logradouro": "Avenida Joaquim da Costa Lima",
+    "bairro": "Centro",
+    "localidade": "Belford Roxo",
+    "uf": "RJ",
+    "ibge": "3300456",
+    "ddd": "21"
+  }
+}
