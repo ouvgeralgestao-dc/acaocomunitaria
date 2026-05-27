@@ -75,6 +75,27 @@ CREATE TABLE IF NOT EXISTS comunidade_ceps (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
+-- TABELA: usuarios
+-- Controle de acesso ao sistema (RBAC)
+-- senha_hash: bcrypt rounds=10
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS usuarios (
+  id            INT UNSIGNED     NOT NULL AUTO_INCREMENT,
+  nome          VARCHAR(100)     NOT NULL,
+  usuario       VARCHAR(50)      NOT NULL,
+  senha_hash    VARCHAR(255)     NOT NULL,
+  perfil        ENUM('admin','operador','visualizador') NOT NULL DEFAULT 'visualizador',
+  ativo         TINYINT(1)       NOT NULL DEFAULT 1,
+  criado_em     TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_usuario_login (usuario),
+  KEY idx_usuario_perfil (perfil),
+  KEY idx_usuario_ativo (ativo)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
 -- TABELA: audit_log
 -- Rastreamento de todas as alterações territoriais
 -- ------------------------------------------------------------

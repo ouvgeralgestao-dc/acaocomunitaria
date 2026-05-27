@@ -2,71 +2,92 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 const logger = require('./src/utils/logger');
 
 /**
  * SIMAC - Sistema de Inteligência e Monitoramento de Ação Comunitária
- * Backend API Server
- * Arquitetura em camadas robusta, focada em segurança, observabilidade e performance.
+ * Backend API Server — Arquitetura em camadas com autenticação JWT e RBAC.
  */
 
 const app = express();
 const PORT = process.env.PORT || 8200;
 
-// Configurações Globais
+// ── Middlewares Globais ──────────────────────────────────────────────────────
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
+app.use(cookieParser());
 
-// Servir arquivos estáticos (Frontend)
+// ── Arquivos Estáticos (Frontend) ─────────────────────────────────────────────
+// A página de login é pública; o index.html é protegido via verificação no cliente
 app.use(express.static(path.join(__dirname, './')));
 
 // Rota silenciosa para favicon.ico
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
-// 🛡️ Segurança: Rate Limiting para APIs públicas geográficas (Totalmente gratuito)
+// Rota raiz: redireciona para login
+app.get('/', (req, res) => res.redirect('/login.html'));
+
+// ── Rate Limiting para APIs públicas ──────────────────────────────────────────
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // Janela de 15 minutos
-  max: 100, // Limite estrito de 100 requisições por IP por janela de 15 minutos
-  message: { error: 'Excesso de requisições. Por favor, aguarde alguns minutos e tente novamente.' },
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { error: 'Excesso de requisições. Por favor, aguarde alguns minutos.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-// Importação das Camadas de Controle Modularizadas
-const geojsonController  = require('./src/controllers/geojsonController');
-const geocodeController  = require('./src/controllers/geocodeController');
-const spatialController  = require('./src/controllers/spatialController');
+// Rate limiting específico para auth (proteção anti-brute-force)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Muitas tentativas de login. Aguarde 15 minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
-// 🗺️ Registro das Rotas API Territoriais e GIS (GeoJSON / Geocodificação)
-app.post('/api/save-geojson',   geojsonController.saveGeoJSON);
-app.post('/api/clear-geojson', geojsonController.clearGeoJSON);
-app.post('/api/import-geojson', geojsonController.importGeoJSON);
-app.get('/api/autocomplete',    apiLimiter, geocodeController.autocomplete);
-app.get('/api/geocode',         apiLimiter, geocodeController.search);
+// ── Importação das Camadas ─────────────────────────────────────────────────────
+const authController    = require('./src/controllers/authController');
+const authMiddleware    = require('./src/middlewares/authMiddleware');
+const geojsonController = require('./src/controllers/geojsonController');
+const geocodeController = require('./src/controllers/geocodeController');
+const spatialController = require('./src/controllers/spatialController');
 
-// 🌐 Rotas API Espacial MySQL (ST_Contains / ST_Intersects)
-app.get('/api/comunidades',                   spatialController.listarComunidades);
-app.get('/api/comunidades/ponto',             spatialController.buscarPorPonto);
-app.get('/api/comunidades/:id',               spatialController.detalharComunidade);
-app.get('/api/comunidades/:id/ruas',          spatialController.listarRuas);
-app.put('/api/comunidades/:id/geometria',     spatialController.atualizarGeometria);
+// ── Rotas de Autenticação (públicas) ──────────────────────────────────────────
+app.post('/api/auth/login',  authLimiter, authController.login);
+app.get('/api/auth/me',      authMiddleware, authController.me);
+app.post('/api/auth/logout', authMiddleware, authController.logout);
 
-// 🔍 Tratamento Global de Exceções para Evitar Crash do Servidor
-process.on('unhandledRejection', (reason, promise) => {
-  logger.error('[Fatal Error] Unhandled Rejection detectada no processo principal.', reason, { promise });
+// ── Rotas API GIS (protegidas) ────────────────────────────────────────────────
+app.post('/api/save-geojson',              authMiddleware, geojsonController.saveGeoJSON);
+app.post('/api/clear-geojson',             authMiddleware, geojsonController.clearGeoJSON);
+app.post('/api/import-geojson',            authMiddleware, geojsonController.importGeoJSON);
+app.get('/api/autocomplete',               apiLimiter, authMiddleware, geocodeController.autocomplete);
+app.get('/api/geocode',                    apiLimiter, authMiddleware, geocodeController.search);
+
+// ── Rotas API Espacial MySQL ──────────────────────────────────────────────────
+app.get('/api/comunidades',                authMiddleware, spatialController.listarComunidades);
+app.get('/api/comunidades/ponto',          authMiddleware, spatialController.buscarPorPonto);
+app.get('/api/comunidades/:id',            authMiddleware, spatialController.detalharComunidade);
+app.get('/api/comunidades/:id/ruas',       authMiddleware, spatialController.listarRuas);
+app.put('/api/comunidades/:id/geometria',  authMiddleware, spatialController.atualizarGeometria);
+
+// ── Tratamento Global de Exceções ──────────────────────────────────────────────
+process.on('unhandledRejection', (reason) => {
+  logger.error('[Fatal] Unhandled Rejection no processo principal.', reason);
 });
 
 process.on('uncaughtException', (err) => {
-  logger.error('[Fatal Error] Uncaught Exception disparada no processo principal.', err);
+  logger.error('[Fatal] Uncaught Exception no processo principal.', err);
 });
 
-// Inicialização do Servidor Enterprise
+// ── Inicialização ─────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
-  logger.info('Servidor corporativo SIMAC (Sistema de Inteligência e Monitoramento de Ação Comunitária) iniciado com sucesso.', {
+  logger.info('Servidor SIMAC iniciado com sucesso.', {
     port: PORT,
     environment: process.env.NODE_ENV || 'development',
-    gisOrchestrator: 'Active (Hybrid Fallback Enabled)',
-    rateLimiting: 'Active (100req/15min)'
+    auth: 'JWT (8h expiry)',
+    rateLimiting: 'Active (100req/15min | auth: 10req/15min)',
   });
 });

@@ -3,6 +3,7 @@ import { mapController } from './modules/mapController.js';
 import { uiController } from './modules/uiController.js';
 import { editorController } from './modules/editorController.js';
 import { geocodingUI } from './modules/geocodingUI.js';
+import { api } from './utils/api.js';
 
 /**
  * ASA v3 - Main Orchestrator
@@ -41,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       debounceTimer = setTimeout(async () => {
         try {
           const url = `api/autocomplete?q=${encodeURIComponent(query)}`;
-          const res = await fetch(url);
+          const res = await api.get(url);
           const data = await res.json();
           
           container.innerHTML = '';
@@ -99,7 +100,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       container.style.display = 'none';
 
       try {
-        const res = await fetch(`api/geocode?q=${encodeURIComponent(query)}&limit=10`);
+        const res = await api.get(`api/geocode?q=${encodeURIComponent(query)}&limit=10`);
         const data = await res.json();
 
         if (data && data.length > 0) {
@@ -248,8 +249,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           .setContent(`
             <div class="popup-content">
               ${result.isApproximated ? '<div class="badge-approx" style="margin-bottom:8px;">ENDEREÇO APROXIMADO</div>' : ''}
-              <h3 style="margin:0 0 4px; font-size:0.95rem; color:#f8fafc;">${mainLabel}</h3>
-              ${secondaryLabel ? `<p style="margin:0 0 10px; font-size:0.8rem; color:#94a3b8;">${secondaryLabel}</p>` : ''}
+              <h3 style="margin:0 0 4px; font-size:0.95rem; color:var(--text-primary);">${mainLabel}</h3>
+              ${secondaryLabel ? `<p style="margin:0 0 10px; font-size:0.8rem; color:var(--text-secondary);">${secondaryLabel}</p>` : ''}
               ${popupTag}
             </div>
           `)

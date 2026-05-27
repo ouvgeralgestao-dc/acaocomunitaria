@@ -1,5 +1,6 @@
 import { mapController } from './mapController.js';
 import { uiController } from './uiController.js';
+import { api } from '../utils/api.js';
 
 export const cleanerController = {
   selectedIds: new Set(),
@@ -111,7 +112,7 @@ export const cleanerController = {
       const tr = document.createElement('tr');
       tr.style.borderBottom = '1px solid var(--border)';
       tr.style.transition = 'background 0.2s';
-      tr.addEventListener('mouseenter', () => tr.style.background = 'rgba(255, 255, 255, 0.02)');
+      tr.addEventListener('mouseenter', () => tr.style.background = 'var(--glass-hover)');
       tr.addEventListener('mouseleave', () => tr.style.background = 'transparent');
 
       tr.innerHTML = `
@@ -131,7 +132,7 @@ export const cleanerController = {
           </div>
         </td>
         <td style="padding: 12px; color: var(--text-secondary);">
-          <span style="background: rgba(255,255,255,0.06); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; text-transform: uppercase;">
+          <span style="background: var(--glass-bg-dense); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; text-transform: uppercase;">
             ${geomType}
           </span>
         </td>
@@ -339,11 +340,7 @@ export const cleanerController = {
   async saveToServer() {
     const featureCollection = mapController.geoJsonLayer.toGeoJSON();
     try {
-      const response = await fetch('api/save-geojson', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ featureCollection })
-      });
+      const response = await api.post('api/save-geojson', { featureCollection });
       const result = await response.json();
       if (!response.ok) {
         alert('Erro ao salvar: ' + result.error);

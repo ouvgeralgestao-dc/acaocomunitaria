@@ -1,5 +1,6 @@
 import { mapController } from './mapController.js';
 import { stateManager } from './stateManager.js';
+import { api } from '../utils/api.js';
 
 export const editorController = {
     isEditing: false,
@@ -138,13 +139,7 @@ export const editorController = {
 // Continuação da lógica de salvamento permanece igual.
 
         try {
-            const response = await fetch('api/save-geojson', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ featureCollection })
-            });
+            const response = await api.post('api/save-geojson', { featureCollection });
 
             const result = await response.json();
             if (response.ok) {
@@ -227,13 +222,7 @@ export const editorController = {
             const replaceExisting = this.replaceCheck ? this.replaceCheck.checked : false;
 
             try {
-                const response = await fetch('api/import-geojson', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ featureCollection, replaceExisting })
-                });
+                const response = await api.post('api/import-geojson', { featureCollection, replaceExisting });
 
                 const result = await response.json();
 
