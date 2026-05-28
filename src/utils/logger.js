@@ -1,6 +1,6 @@
 /**
  * ASA v3 - Structured Logger
- * Utilitário de alta performance para padronização de observabilidade e logs governamentais.
+ * Utilitário de alta performance para padronização de observabilidade e logs de Ação Comunitária.
  */
 
 const formatMessage = (level, message, meta = {}) => {

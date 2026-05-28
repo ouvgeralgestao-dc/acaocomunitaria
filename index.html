@@ -4,15 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SIMAC - Sistema de Inteligência e Monitoramento de Ação Comunitária</title>
-  <!-- Leaflet CSS substituindo Mapbox -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Leaflet CSS (local) -->
+  <link rel="stylesheet" href="./src/libs/leaflet/leaflet.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./src/css/main.css?v=5">
   <!-- Auth Guard: redireciona para login se não autenticado -->
   <script>
     (function() {
+      // Base URL dinâmica: detecta subpasta automaticamente (/simac/, /, etc.)
+      window._basePath = (function() {
+        const p = window.location.pathname;
+        const last = p.lastIndexOf('/');
+        return last > 0 ? p.substring(0, last + 1) : '/';
+      })();
       const token = localStorage.getItem('simac_token');
-      if (!token) { window.location.replace('/login.html'); }
+      if (!token) { window.location.replace(window._basePath + 'login.html'); }
     })();
   </script>
 </head>
@@ -81,7 +87,7 @@
     <section id="view-map" class="view active">
       <aside class="sidebar">
         <header class="sidebar-header">
-          <h1>Ações Comunitárias</h1>
+          <h1>Ação Comunitária</h1>
           <p>Duque de Caxias - Inteligência Territorial</p>
         </header>
         
@@ -278,10 +284,10 @@
     </div>
   </div>
 
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- Turf.js para Análise Espacial -->
-  <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+  <!-- Leaflet JS (local) -->
+  <script src="./src/libs/leaflet/leaflet.js"></script>
+  <!-- Turf.js para Análise Espacial (local) -->
+  <script src="./src/libs/turf.min.js"></script>
   <!-- Leaflet.Editable -->
   <script src="./src/js/lib/Leaflet.Editable.js"></script>
   <script type="module" src="./src/js/main.js?v=5"></script>
@@ -289,15 +295,16 @@
   <script>
     window.__SIMAC_LOGOUT__ = async function() {
       const token = localStorage.getItem('simac_token');
+      const base = window._basePath || '/';
       try {
-        await fetch('/api/auth/logout', {
+        await fetch(base + 'api/auth/logout', {
           method: 'POST',
           headers: { 'Authorization': 'Bearer ' + token }
         });
       } catch(_) {}
       localStorage.removeItem('simac_token');
       localStorage.removeItem('simac_usuario');
-      window.location.replace('/login.html');
+      window.location.replace(base + 'login.html');
     };
   </script>
 </body>

@@ -45,14 +45,16 @@ DB_NAME=simac`;
   console.log('   ✅ Arquivo .env gerado com configurações locais do MySQL (User: root / Pass: root).');
 }
 
-dotenv.config({ path: envPath });
+dotenv.config({ path: envPath, override: true });
 
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
+  port: parseInt(process.env.DB_PORT || '3307', 10),
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'simac'
 };
+
 
 // Utilitário de conversão GeoJSON para WKT (Well-Known Text) de alta compatibilidade
 function geojsonToWkt(geom) {
@@ -196,6 +198,7 @@ async function runBootstrap() {
     // Conexão inicial sem banco de dados especificado
     connection = await mysql.createConnection({
       host: dbConfig.host,
+      port: dbConfig.port,
       user: dbConfig.user,
       password: dbConfig.password
     });
