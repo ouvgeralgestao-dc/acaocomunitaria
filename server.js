@@ -43,7 +43,6 @@ app.get('/', (req, res) => res.redirect('/login.html'));
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 200,
-  trustProxy: true,
   message: { error: 'Excesso de requisições. Por favor, aguarde alguns minutos.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -52,7 +51,6 @@ const apiLimiter = rateLimit({
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
-  trustProxy: true,
   message: { error: 'Muitas tentativas de login. Aguarde 15 minutos.' },
   standardHeaders: true,
   legacyHeaders: false,
