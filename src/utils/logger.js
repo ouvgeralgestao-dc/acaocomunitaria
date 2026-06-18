@@ -1,6 +1,5 @@
 /**
- * ASA v3 - Structured Logger
- * Utilitário de alta performance para padronização de observabilidade e logs de Ação Comunitária.
+ * SIMAC - Structured Logger
  */
 
 const formatMessage = (level, message, meta = {}) => {

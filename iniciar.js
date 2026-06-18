@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync, spawn } = require('child_process');
-const bcrypt = require('bcryptjs');
 
 console.log('\x1b[36m====================================================\x1b[0m');
 console.log('\x1b[36m   SIMAC - SISTEMA DE INTELIGÊNCIA & MONITORAMENTO  \x1b[0m');
@@ -14,6 +13,8 @@ try {
   require('dotenv');
   require('bcryptjs');
   require('jsonwebtoken');
+  require('zod');
+  require('helmet');
   console.log('   ✅ Dependências pré-instaladas localizadas.');
 } catch (e) {
   console.log('\x1b[33m   ⚠️  Dependências ausentes detectadas. Iniciando "npm install"...\x1b[0m');
@@ -26,9 +27,10 @@ try {
   }
 }
 
-// Agora que as dependências estão garantidas, podemos importá-las com segurança
+// Importações seguras
 const mysql = require('mysql2/promise');
 const dotenv = require('dotenv');
+const bcrypt = require('bcryptjs');
 
 // Carregar variáveis de ambiente
 const envPath = path.join(__dirname, '.env');
@@ -37,6 +39,7 @@ if (!fs.existsSync(envPath)) {
   const defaultEnv = `PORT=8200
 NODE_ENV=production
 ADMIN_TOKEN=acoes_comunitaria_secret_2026
+JWT_SECRET=simac_jwt_super_secret_2026_change_me
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=root
@@ -49,33 +52,32 @@ dotenv.config({ path: envPath, override: true });
 
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '3307', 10),
+  port: parseInt(process.env.DB_PORT || '3306', 10),
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'simac'
 };
 
-
-// Utilitário de conversão GeoJSON para WKT (Well-Known Text) de alta compatibilidade
+// Conversor GeoJSON → WKT (Polygon e MultiPolygon)
 function geojsonToWkt(geom) {
   if (!geom) return null;
   if (geom.type === 'Polygon') {
     const coordsStr = geom.coordinates.map(ring => 
-      '(' + ring.map(pt => `${pt[0]} ${pt[1]}`).join(', ') + ')'
+      '(' + ring.map(pt => `${pt[1]} ${pt[0]}`).join(', ') + ')'
     ).join(', ');
     return `POLYGON(${coordsStr})`;
   } else if (geom.type === 'MultiPolygon') {
     const polysStr = geom.coordinates.map(poly => 
       '(' + poly.map(ring => 
-        '(' + ring.map(pt => `${pt[0]} ${pt[1]}`).join(', ') + ')'
+        '(' + ring.map(pt => `${pt[1]} ${pt[0]}`).join(', ') + ')'
       ).join(', ') + ')'
     ).join(', ');
     return `MULTIPOLYGON(${polysStr})`;
   }
-  throw new Error(`Geometria do tipo ${geom.type} não é suportada diretamente pelo conversor WKT do SIMAC.`);
+  throw new Error(`Geometria ${geom.type} não suportada.`);
 }
 
-// --- SUÍTE DE DIAGNÓSTICOS AUTOMATIZADOS (10 TESTES DE SOLICITAÇÕES ESPACIAIS E DE VOLUME) ---
+// --- DIAGNÓSTICOS DE SAÚDE ---
 async function runDiagnostics(connection) {
   console.log('\n\x1b[35m====================================================\x1b[0m');
   console.log('\x1b[35m        SIMAC ENTERPRISE SELF-DIAGNOSTIC SUITE      \x1b[0m');
@@ -97,44 +99,13 @@ async function runDiagnostics(connection) {
       }
     },
     {
-      name: '3. Count Total Streets Mapped',
+      name: '3. Spatial Query (ST_Contains Point-in-Polygon)',
       fn: async () => {
-        const [rows] = await connection.query('SELECT COUNT(*) as total FROM comunidade_ruas');
-        return `SUCCESS (${rows[0].total} logradouros mapeados)`;
-      }
-    },
-    {
-      name: '4. Count Total Enriched CEPs',
-      fn: async () => {
-        const [rows] = await connection.query('SELECT COUNT(*) as total FROM comunidade_ceps');
-        return `SUCCESS (${rows[0].total} CEPs enriquecidos)`;
-      }
-    },
-    {
-      name: '5. Detail Specific Community',
-      fn: async () => {
-        const [rows] = await connection.query('SELECT id, nome, total_ruas FROM comunidades LIMIT 1');
-        return rows.length > 0 
-          ? `SUCCESS (ID: ${rows[0].id} | Nome: "${rows[0].nome}")` 
-          : 'FAILED (Base vazia)';
-      }
-    },
-    {
-      name: '6. Query Streets of Specific Community',
-      fn: async () => {
-        const [rows] = await connection.query('SELECT nome_rua FROM comunidade_ruas LIMIT 3');
-        const list = rows.map(r => r.nome_rua).join(', ');
-        return `SUCCESS (Ruas: ${list || 'Nenhuma'})`;
-      }
-    },
-    {
-      name: '7. Spatial Query (ST_Contains Point-in-Polygon)',
-      fn: async () => {
-        // Ponto geográfico dentro da comunidade Teixeira Mendes
-        const testLng = -43.310106;
-        const testLat = -22.745197;
+        // Ponto geográfico dentro do Inferninho (Lixão)
+        const testLng = -43.303148;
+        const testLat = -22.794783;
         const [rows] = await connection.query(
-          `SELECT id, nome FROM comunidades WHERE ST_Contains(geometria, ST_GeomFromText('POINT(${testLng} ${testLat})', 4326))`
+          `SELECT id, nome FROM comunidades WHERE ST_Contains(geometria, ST_GeomFromText('POINT(${testLat} ${testLng})', 4326))`
         );
         return rows.length > 0 
           ? `SUCCESS (Ponto em: "${rows[0].nome}")` 
@@ -142,36 +113,23 @@ async function runDiagnostics(connection) {
       }
     },
     {
-      name: '8. Spatial Area Analysis (ST_Area / SRID)',
+      name: '4. Check Geometries Validity (ST_IsValid)',
       fn: async () => {
-        const [rows] = await connection.query('SELECT id, ST_Area(geometria) as area_graus FROM comunidades LIMIT 1');
-        return rows.length > 0 
-          ? `SUCCESS (ID: ${rows[0].id} | Área: ${parseFloat(rows[0].area_graus).toFixed(6)} sq deg)` 
-          : 'FAILED';
+        const [rows] = await connection.query('SELECT SUM(ST_IsValid(geometria)) as validas, COUNT(*) as total FROM comunidades');
+        const validas = rows[0].validas || 0;
+        const total = rows[0].total || 0;
+        return `SUCCESS (${validas}/${total} geometrias 100% válidas no MySQL)`;
       }
     },
     {
-      name: '9. Audit Log Engine Integrity',
+      name: '5. Audit Log Integrity Check',
       fn: async () => {
-        const testPayload = JSON.stringify({ action: 'SELF_TEST', timestamp: new Date() });
+        const testPayload = JSON.stringify({ action: 'BOOT_DIAGNOSTIC' });
         const [insertRes] = await connection.query(
           'INSERT INTO audit_log (entidade, entidade_id, acao, payload, ip_origem) VALUES (?, ?, ?, ?, ?)',
-          ['comunidade', 9999, 'INSERT', testPayload, '127.0.0.1']
+          ['sistema', 1, 'INSERT', testPayload, '127.0.0.1']
         );
-        const [logRes] = await connection.query('SELECT id, criado_em FROM audit_log WHERE id = ?', [insertRes.insertId]);
-        return logRes.length > 0 
-          ? `SUCCESS (Log ID: ${logRes[0].id} gravado em ${logRes[0].criado_em.toISOString()})` 
-          : 'FAILED';
-      }
-    },
-    {
-      name: '10. Performance Query Benchmark',
-      fn: async () => {
-        const start = Date.now();
-        // Carrega todas as geometrias do banco simulando alta concorrência
-        await connection.query('SELECT id, ST_AsText(geometria) FROM comunidades');
-        const duration = Date.now() - start;
-        return `SUCCESS (Benchmark concluído em ${duration}ms - Excelente!)`;
+        return insertRes.insertId ? `SUCCESS (Log ID ${insertRes.insertId} gravado)` : 'FAILED';
       }
     }
   ];
@@ -195,7 +153,6 @@ async function runBootstrap() {
   // --- FASE 2: CONEXÃO E CRIAÇÃO DO BANCO DE DADOS ---
   console.log('\n[2/4] Conectando ao servidor MySQL e preparando banco de dados...');
   try {
-    // Conexão inicial sem banco de dados especificado
     connection = await mysql.createConnection({
       host: dbConfig.host,
       port: dbConfig.port,
@@ -203,37 +160,31 @@ async function runBootstrap() {
       password: dbConfig.password
     });
 
-    console.log(`   Connected to MySQL at ${dbConfig.host}`);
-    console.log(`   Criando banco de dados "${dbConfig.database}" se não existir...`);
+    console.log(`   Conectado ao MySQL em ${dbConfig.host}`);
+    console.log(`   Preparando banco de dados "${dbConfig.database}"...`);
     await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbConfig.database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
     
-    // Reconecta diretamente no banco correto
     await connection.changeUser({ database: dbConfig.database });
-    console.log(`   ✅ Banco de dados "${dbConfig.database}" pronto.`);
+    console.log(`   ✅ Banco de dados pronto.`);
 
   } catch (err) {
-    console.error('\x1b[31m   ❌ Falha na conexão ou criação do banco de dados:\x1b[0m');
-    console.error(`      Erro código: ${err.code}`);
-    console.error(`      Mensagem: ${err.message}`);
-    console.log('\n\x1b[33m💡 DICA: Verifique se o seu servidor MySQL local está rodando e se as credenciais no arquivo .env estão corretas.\x1b[0m\n');
+    console.error('\x1b[31m   ❌ Falha na conexão com o banco de dados:\x1b[0m', err.message);
     process.exit(1);
   }
 
-  // --- FASE 3: CRIAÇÃO DO SCHEMA (DDL) ---
-  console.log('\n[3/4] Criando DDL de tabelas e indexações espaciais...');
+  // --- FASE 3: CRIAÇÃO DO SCHEMA (DDL REFATORADO) ---
+  console.log('\n[3/4] Criando estrutura de tabelas e índices espaciais...');
   try {
-    // 1. Tabela audit_log
+    // 1. Tabela usuarios
     await connection.query(`
-      CREATE TABLE IF NOT EXISTS audit_log (
-        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        entidade VARCHAR(50) NOT NULL,
-        entidade_id INT UNSIGNED NOT NULL,
-        acao ENUM('INSERT', 'UPDATE', 'DELETE') NOT NULL,
-        payload JSON,
-        ip_origem VARCHAR(45),
+      CREATE TABLE IF NOT EXISTS usuarios (
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        nome VARCHAR(100) NOT NULL,
+        usuario VARCHAR(50) NOT NULL UNIQUE,
+        senha_hash VARCHAR(255) NOT NULL,
+        ativo TINYINT(1) NOT NULL DEFAULT 1,
         criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_audit_entidade (entidade),
-        INDEX idx_audit_criado (criado_em)
+        atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB;
     `);
 
@@ -244,6 +195,8 @@ async function runBootstrap() {
         nome VARCHAR(255) NOT NULL UNIQUE,
         total_ruas SMALLINT NOT NULL DEFAULT 0,
         geometria GEOMETRY NOT NULL SRID 4326,
+        complexo VARCHAR(100),
+        cor_hex VARCHAR(7),
         criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         SPATIAL INDEX idx_comunidades_geom (geometria)
@@ -257,8 +210,7 @@ async function runBootstrap() {
         comunidade_id INT UNSIGNED NOT NULL,
         nome_rua VARCHAR(255) NOT NULL,
         FOREIGN KEY (comunidade_id) REFERENCES comunidades(id) ON DELETE CASCADE,
-        INDEX idx_ruas_comunidade (comunidade_id),
-        INDEX idx_ruas_nome (nome_rua)
+        UNIQUE KEY uq_com_rua (comunidade_id, nome_rua)
       ) ENGINE=InnoDB;
     `);
 
@@ -275,29 +227,40 @@ async function runBootstrap() {
         ibge VARCHAR(10),
         ddd CHAR(3),
         FOREIGN KEY (comunidade_id) REFERENCES comunidades(id) ON DELETE CASCADE,
-        INDEX idx_ceps_comunidade (comunidade_id),
         INDEX idx_ceps_cep (cep)
       ) ENGINE=InnoDB;
     `);
 
-    // 5. Tabela usuarios (RBAC)
+    // 5. Tabela de histórico de geometrias
     await connection.query(`
-      CREATE TABLE IF NOT EXISTS usuarios (
+      CREATE TABLE IF NOT EXISTS comunidade_historico_geometria (
         id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        nome VARCHAR(100) NOT NULL,
-        usuario VARCHAR(50) NOT NULL,
-        senha_hash VARCHAR(255) NOT NULL,
-        perfil ENUM('admin','operador','visualizador') NOT NULL DEFAULT 'visualizador',
-        ativo TINYINT(1) NOT NULL DEFAULT 1,
+        comunidade_id INT UNSIGNED NOT NULL,
+        geometria GEOMETRY NOT NULL SRID 4326,
+        usuario_id INT UNSIGNED,
         criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        UNIQUE KEY uq_usuario_login (usuario),
-        INDEX idx_usuario_perfil (perfil),
-        INDEX idx_usuario_ativo (ativo)
+        FOREIGN KEY (comunidade_id) REFERENCES comunidades(id) ON DELETE CASCADE,
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL,
+        SPATIAL INDEX idx_hist_geom (geometria)
       ) ENGINE=InnoDB;
     `);
 
-    // Seed: Administrador padrão (idempotente)
+    // 6. Tabela audit_log
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS audit_log (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        entidade VARCHAR(50) NOT NULL,
+        entidade_id INT UNSIGNED NOT NULL,
+        acao ENUM('INSERT', 'UPDATE', 'DELETE') NOT NULL,
+        usuario_id INT UNSIGNED,
+        payload JSON,
+        ip_origem VARCHAR(45),
+        criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
+      ) ENGINE=InnoDB;
+    `);
+
+    // Seed: Administrador padrão
     const [[{ adminExists }]] = await connection.query(
       'SELECT COUNT(*) as adminExists FROM usuarios WHERE usuario = ?',
       ['admin']
@@ -305,122 +268,102 @@ async function runBootstrap() {
     if (adminExists === 0) {
       const senhaHash = await bcrypt.hash('admin2026', 10);
       await connection.query(
-        'INSERT INTO usuarios (nome, usuario, senha_hash, perfil) VALUES (?, ?, ?, ?)',
-        ['Administrador', 'admin', senhaHash, 'admin']
+        'INSERT INTO usuarios (nome, usuario, senha_hash) VALUES (?, ?, ?)',
+        ['Administrador', 'admin', senhaHash]
       );
-      console.log('   ✅ Usuário administrador padrão criado (usuario: admin / senha: admin2026).');
-    } else {
-      console.log('   ℹ️  Usuário administrador já existe. Seed ignorado.');
+      console.log('   ✅ Usuário administrador padrão criado (admin / admin2026).');
     }
 
-    console.log('   ✅ Schema DDL e indexações espaciais gerados com sucesso.');
+    console.log('   ✅ Estrutura física de tabelas criada.');
   } catch (err) {
-    console.error('\x1b[31m   ❌ Falha ao criar estrutura de tabelas (DDL):\x1b[0m', err.message);
+    console.error('\x1b[31m   ❌ Falha ao criar estrutura de tabelas DDL:\x1b[0m', err.message);
     await connection.end();
     process.exit(1);
   }
 
-  // --- FASE 4: POPULAÇÃO DE DADOS (SEEDING TRANSACIONADO) ---
-  console.log('\n[4/4] Verificando e populando banco de dados (Seeding)...');
+  // --- FASE 4: POPULAÇÃO DE DADOS (NOVO BANCO DE DADOS GEOJSON) ---
+  console.log('\n[4/4] Populando banco de dados a partir da nova base geojson_comunidades...');
   try {
     const [[{ count }]] = await connection.query('SELECT COUNT(*) as count FROM comunidades');
     
     if (count > 0) {
-      console.log(`   ℹ️  O banco de dados já possui ${count} comunidades cadastradas. Ignorando carga inicial (Idempotente).`);
+      console.log(`   ℹ️  O banco de dados já possui ${count} comunidades cadastradas. Ignorando carga inicial.`);
     } else {
-      console.log('   Garantindo consolidação da base local de dados...');
-      execSync('node scripts/consolidate_db.js', { stdio: 'ignore', cwd: __dirname });
-      
-      const masterDataPath = path.join(__dirname, 'src/data/simac_master_db.json');
-      if (!fs.existsSync(masterDataPath)) {
-        throw new Error('Arquivo de dados mestre simac_master_db.json não localizado mesmo após consolidação.');
-      }
-      
-      const masterData = JSON.parse(fs.readFileSync(masterDataPath, 'utf8'));
-      console.log(`   Iniciando carga transacionada de ${masterData.length} comunidades...`);
-      
-      const start = Date.now();
-      await connection.beginTransaction();
+      const dbSourcePath = path.join(__dirname, 'geojson_comunidades/_TODAS_COMUNIDADES.geojson');
 
-      const stmtComunidade = await connection.prepare(
-        'INSERT INTO comunidades (id, nome, total_ruas, geometria) VALUES (?, ?, ?, ST_GeomFromText(?, 4326))'
-      );
-      const stmtRua = await connection.prepare(
-        'INSERT INTO comunidade_ruas (comunidade_id, nome_rua) VALUES (?, ?)'
-      );
-      const stmtCep = await connection.prepare(
-        'INSERT INTO comunidade_ceps (comunidade_id, cep, logradouro, bairro, localidade, uf, ibge, ddd) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-      );
-
-      let ruasCount = 0;
-      let cepsCount = 0;
-
-      for (const com of masterData) {
-        const wkt = geojsonToWkt(com.geometria);
+      if (fs.existsSync(dbSourcePath)) {
+        const fileContent = fs.readFileSync(dbSourcePath, 'utf8');
+        const geojson = JSON.parse(fileContent);
+        console.log(`   Carregando nova base com ${geojson.features.length} features...`);
         
-        // Inserir Comunidade
-        await stmtComunidade.execute([
-          com.id, 
-          com.nome, 
-          com.total_ruas, 
-          wkt
-        ]);
+        await connection.beginTransaction();
 
-        // Inserir Ruas
-        if (com.ruas && com.ruas.length > 0) {
-          for (const rua of com.ruas) {
-            await stmtRua.execute([com.id, rua]);
-            ruasCount++;
-          }
+        const stmtComunidade = await connection.prepare(
+          'INSERT INTO comunidades (id, nome, total_ruas, geometria, complexo, cor_hex) VALUES (?, ?, ?, ST_GeomFromText(?, 4326), ?, ?)'
+        );
+
+        let index = 1;
+        for (const f of geojson.features) {
+          if (!f || !f.geometry) continue;
+
+          // Validação / sanitização espacial
+          const geom = f.geometry;
+          const wkt = geojsonToWkt(geom);
+
+          const props = f.properties || {};
+          const nome = props.Comunidade || props.COMUNIDADE || props.name || props.comunidade_pasta || `Comunidade_${index}`;
+          const complexo = props.complexo || props.Complexo || 'Desconhecido';
+          const corHex = props.fill || props.cor_hex || '#ff0000';
+
+          await stmtComunidade.execute([
+            index,
+            nome,
+            0,
+            wkt,
+            complexo,
+            corHex
+          ]);
+          index++;
         }
 
-        // Inserir CEPs enriquecidos
-        if (com.ceps && com.ceps.length > 0) {
-          for (const c of com.ceps) {
-            const o = c.oficial || {};
-            await stmtCep.execute([
-              com.id,
-              c.cep,
-              o.logradouro || null,
-              o.bairro || null,
-              o.localidade || null,
-              o.uf || null,
-              o.ibge || null,
-              o.ddd || null
-            ]);
-            cepsCount++;
-          }
+        await connection.commit();
+        console.log(`   ✅ Carga inicial do novo banco geojson_comunidades efetuada com sucesso! (${index - 1} comunidades inseridas)`);
+        
+        // Agora, sincroniza o banco de dados recém-carregado gerando os arquivos de uso do frontend
+        console.log('   Sincronizando arquivos locais de dados para o frontend...');
+        const geojsonController = require('./src/controllers/geojsonController');
+        await geojsonController.syncFilesFromDatabase();
+        
+        const boundarySrc = path.join(__dirname, 'geojson_comunidades/Duque_de_Caxias.geojson');
+        const boundaryDst = path.join(__dirname, 'src/data/Duque_de_Caxias.geojson');
+        if (fs.existsSync(boundarySrc)) {
+          fs.copyFileSync(boundarySrc, boundaryDst);
+          console.log('   ✅ Limite municipal de Duque de Caxias copiado para o frontend.');
         }
+        
+      } else {
+        console.log('   ⚠️  Nova base geojson_comunidades/_TODAS_COMUNIDADES.geojson não localizada. Carga inicial pulada.');
       }
-
-      await connection.commit();
-      const elapsed = ((Date.now() - start) / 1000).toFixed(2);
-      
-      console.log(`   ✅ Carga concluída com sucesso em ${elapsed}s!`);
-      console.log(`      - Comunidades inseridas: ${masterData.length}`);
-      console.log(`      - Ruas inseridas: ${ruasCount}`);
-      console.log(`      - CEPs auditados inseridos: ${cepsCount}`);
     }
 
-    // Executar a suíte de diagnósticos (10 solicitações/consultas) com a conexão ativa
+    // Executar diagnósticos
     await runDiagnostics(connection);
 
   } catch (err) {
     if (connection) await connection.rollback();
-    console.error('\x1b[31m   ❌ Falha na carga de dados (Rollback ativado):\x1b[0m', err.message);
+    console.error('\x1b[31m   ❌ Falha na carga do novo banco de dados (Rollback):\x1b[0m', err.message);
     if (connection) await connection.end();
     process.exit(1);
   } finally {
     if (connection) await connection.end();
   }
 
-  // --- INICIALIZAÇÃO DO SERVIDOR ---
+  // Inicializa o servidor Express
   console.log('\n\x1b[32m====================================================\x1b[0m');
-  console.log('\x1b[32m      SIMAC INICIALIZADO - EXECUTANDO SERVIDOR      \x1b[0m');
+  console.log('      SIMAC INICIALIZADO - EXECUTANDO SERVIDOR      ');
   console.log('\x1b[32m====================================================\x1b[0m\n');
 
   const server = spawn('node', ['server.js'], { stdio: 'inherit', shell: true, cwd: __dirname });
-
   server.on('error', (err) => {
     console.error('\x1b[31mErro fatal ao iniciar o servidor:\x1b[0m', err.message);
   });

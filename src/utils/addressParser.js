@@ -1,15 +1,11 @@
 /**
- * ASA v3 - Brazilian Address Parser
- * Converte strings de endereço brasileiras em objetos estruturados.
- * Exemplo: "Rua Cananéia, 135, Jardim Gramacho" -> { street: "Rua Cananéia", number: "135", neighborhood: "Jardim Gramacho" }
+ * SIMAC - Brazilian Address Parser
  */
 const addressParser = {
     parse(input) {
         if (!input) return null;
 
-        // Regex para: Logradouro, Numero, Bairro
         const fullRegex = /^(.*?),\s*(\d+)\s*,\s*(.*?)(?:\s*-\s*.*)?$/i;
-        // Regex para: Logradouro, Numero
         const streetNumberRegex = /^(.*?),\s*(\d+)\s*$/i;
 
         let match = input.match(fullRegex);
@@ -32,7 +28,6 @@ const addressParser = {
             };
         }
 
-        // Se não bater no padrão estruturado, retorna como busca simples
         return {
             street: input.trim(),
             number: null,

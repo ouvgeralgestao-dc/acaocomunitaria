@@ -36,7 +36,8 @@ export const editorController = {
         // Escuta eventos de clique em camadas vindo do mapController
         document.addEventListener('asa:layer:edit', (e) => {
             this.editedLayer = e.detail.layer;
-            this.setEditState(true, `Editando: ${this.editedLayer.feature.properties.neighborhood}`);
+            const comName = this.editedLayer.feature.properties.COMUNIDADE || this.editedLayer.feature.properties.name || this.editedLayer.feature.properties.neighborhood || 'Desconhecido';
+            this.setEditState(true, `Editando: ${comName}`);
         });
 
         this.btnImport.addEventListener('click', () => this.fileInput.click());
@@ -67,45 +68,70 @@ export const editorController = {
         polygon.on('editable:drawing:end', (e) => {
             this.btnFinish.style.display = 'none';
             // Timeout curto para garantir que o prompt não bloqueie o fim do evento de desenho
-            setTimeout(() => {
-                const name = prompt('Nome da nova comunidade:');
-                const neighborhood = prompt('Bairro de referência:', 'Duque de Caxias');
-                
-                if (name) {
+            setTimeout(async () => {
+                const res = await window.showCreateCommunityModal(stateManager.complexes);
+                if (res) {
+                    const { name, neighborhood, complex, newComplexName, newComplexColor } = res;
+                    
+                    let complexo = complex;
+                    let corHex = '#cccccc';
+                    
+                    if (newComplexName) {
+                        corHex = newComplexColor || '#ff0000';
+                        stateManager.complexes[newComplexName] = corHex;
+                    } else if (complexo && complexo !== 'Outros') {
+                        corHex = stateManager.complexes[complexo] || '#cccccc';
+                    }
+                    
                     const newId = Math.floor(1000 + Math.random() * 9000);
                     e.layer.feature = {
                         type: 'Feature',
                         id: newId,
                         properties: { 
-                            neighborhood: neighborhood,
+                            id: newId,
+                            COMUNIDADE: name,
                             name: name,
-                            created_at: new Date().toISOString()
-                        },
-                        geometry: e.layer.toGeoJSON().geometry
+                            NEIGHBORHOOD: neighborhood,
+                            neighborhood: neighborhood,
+                            COMPLEXO: complexo,
+                            COR_HEX: corHex,
+                            cor_hex: corHex,
+                            oculto: false
+                        }
                     };
-                    this.editedLayer = e.layer;
-                    this.setEditState(true, `Nova: ${name} (Pronta para salvar)`);
-                    this.editedLayer.setStyle({ color: '#f59e0b', weight: 4, fillOpacity: 0.5 });
-                    this.editedLayer.enableEdit();
+                    
+                    // Adicionar ao mapa principal
+                    mapController.geoJsonLayer.addData(e.layer.feature);
+                    
+                    // Remover o layer temporário de desenho
+                    e.layer.remove();
+                    
+                    this.editedLayer = null;
+                    this.setEditState(true, `Comunidade "${name}" criada (Clique em Salvar)`);
                 } else {
-                    this.editorMap.removeLayer(e.layer);
+                    e.layer.remove();
                     this.setEditState(false);
                 }
-            }, 100);
+            }, 50);
         });
     },
 
     deleteSelected() {
         if (!this.editedLayer) {
-            alert('Selecione uma comunidade clicando nela primeiro.');
+            alert('Nenhuma comunidade selecionada para exclusão.');
             return;
         }
 
-        const name = this.editedLayer.feature.properties.neighborhood || this.editedLayer.feature.properties.name;
-        if (confirm(`Tem certeza que deseja REMOVER COMPLETAMENTE a comunidade "${name}"?`)) {
-            mapController.geoJsonLayer.removeLayer(this.editedLayer);
-            this.setEditState(true, 'Comunidade removida (Clique em Salvar)');
-        }
+        const name = this.editedLayer.feature.properties.COMUNIDADE || this.editedLayer.feature.properties.name || this.editedLayer.feature.properties.neighborhood;
+        
+        // Uso de modal customizado
+        window.showCustomConfirm('Excluir Comunidade', `Tem certeza que deseja REMOVER COMPLETAMENTE a comunidade "${name}"?`)
+            .then((confirmDelete) => {
+                if (confirmDelete) {
+                    mapController.geoJsonLayer.removeLayer(this.editedLayer);
+                    this.setEditState(true, 'Comunidade removida (Clique em Salvar)');
+                }
+            });
     },
 
     setEditState(active, text = 'Modo Visualização') {
@@ -143,7 +169,7 @@ export const editorController = {
 
             const result = await response.json();
             if (response.ok) {
-                alert('Alterações salvas com sucesso! A base mestre será atualizada na próxima consolidação.');
+                alert('Alterações salvas e sincronizadas com sucesso no banco de dados e arquivos!');
                 this.setEditState(false);
                 location.reload(); 
             } else if (response.status === 403) {
@@ -158,8 +184,9 @@ export const editorController = {
         }
     },
 
-    cancelEdit() {
-        if (confirm('Descartar alterações não salvas?')) {
+    async cancelEdit() {
+        const discard = await window.showCustomConfirm('Descartar Alterações', 'Descartar alterações não salvas?');
+        if (discard) {
             location.reload();
         }
     },

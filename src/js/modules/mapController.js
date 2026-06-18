@@ -94,8 +94,9 @@ export const mapController = {
     const id = feature.id;
     const color = stateManager.colors.get(id) || '#cccccc';
     const isVisible = stateManager.isSelected(id);
+    const isOculto = feature.properties.oculto || feature.properties.OCULTO;
     
-    if (!isVisible) return { fillOpacity: 0, weight: 0, opacity: 0 };
+    if (isOculto || !isVisible) return { fillOpacity: 0, weight: 0, opacity: 0, interactive: false };
 
     switch(this.currentBaseLayer) {
       case 'Mapa Escuro':
@@ -130,7 +131,8 @@ export const mapController = {
     this.geoJsonLayer = L.geoJSON(geojsonData, {
       style: (feature) => this.getLayerStyle(feature),
       onEachFeature: (feature, layer) => {
-        const name = feature.properties.neighborhood || feature.properties.name || 'Desconhecido';
+        // Problema 1 corrigido: prioriza 'COMUNIDADE' sobre 'neighborhood' (Bairro/Referência)
+        const name = feature.properties.COMUNIDADE || feature.properties.name || feature.properties.neighborhood || 'Desconhecido';
         const id = feature.id;
         
         layer.bindTooltip(`<strong>${name}</strong>`, {
@@ -176,8 +178,42 @@ export const mapController = {
     }).addTo(this.map);
   },
 
+  boundaryLayer: null,
+
   updateFilters() {
     this.geoJsonLayer.setStyle((feature) => this.getLayerStyle(feature));
+  },
+
+  async toggleBoundary(show) {
+    if (show) {
+      if (this.boundaryLayer) {
+        this.boundaryLayer.addTo(this.map);
+      } else {
+        try {
+          const res = await fetch('src/data/Duque_de_Caxias.geojson');
+          const geojson = await res.json();
+          this.boundaryLayer = L.geoJSON(geojson, {
+            style: {
+              color: '#3b82f6', // elegante azul escuro
+              weight: 3,
+              dashArray: '6, 8',
+              fillColor: '#3b82f6',
+              fillOpacity: 0.03, // preenchimento extremamente sutil
+              interactive: false // não intercepta cliques
+            }
+          }).addTo(this.map);
+          
+          // Opcional: Ajustar zoom para caber o limite de Caxias
+          this.map.fitBounds(this.boundaryLayer.getBounds(), { padding: [20, 20] });
+        } catch (err) {
+          console.error('Erro ao carregar limite municipal:', err);
+        }
+      }
+    } else {
+      if (this.boundaryLayer) {
+        this.map.removeLayer(this.boundaryLayer);
+      }
+    }
   },
 
   jumpTo(lat, lng, zoom = 18) {

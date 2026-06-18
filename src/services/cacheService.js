@@ -1,7 +1,3 @@
-/**
- * ASA v3 - Cache Service
- * Gerencia o armazenamento em memória para evitar chamadas redundantes a APIs pagas.
- */
 class CacheService {
   constructor(ttl = 3600 * 24) { // Padrão: 24 horas
     this.cache = new Map();
@@ -25,7 +21,6 @@ class CacheService {
       expiry: Date.now() + this.ttl
     });
     
-    // Limpeza simples se o cache crescer demais (Max 2000 itens)
     if (this.cache.size > 2000) {
       const firstKey = this.cache.keys().next().value;
       this.cache.delete(firstKey);

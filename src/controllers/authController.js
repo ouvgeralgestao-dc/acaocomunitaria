@@ -3,12 +3,12 @@ const jwt = require('jsonwebtoken');
 const pool = require('../config/database');
 const logger = require('../utils/logger');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'simac_jwt_secret_2026';
+const JWT_SECRET = process.env.JWT_SECRET || 'simac_jwt_super_secret_2026_change_me';
 const JWT_EXPIRES_IN = '8h';
 
 /**
  * POST /api/auth/login
- * Autentica usuário e retorna JWT.
+ * Autentica usuário e retorna JWT (Nível Único Administrativo).
  */
 async function login(req, res) {
   const { usuario, senha } = req.body;
@@ -19,7 +19,7 @@ async function login(req, res) {
 
   try {
     const [rows] = await pool.query(
-      'SELECT id, nome, usuario, senha_hash, perfil, ativo FROM usuarios WHERE usuario = ? LIMIT 1',
+      'SELECT id, nome, usuario, senha_hash, ativo FROM usuarios WHERE usuario = ? LIMIT 1',
       [usuario.toLowerCase().trim()]
     );
 
@@ -43,27 +43,25 @@ async function login(req, res) {
     const payload = {
       id: user.id,
       nome: user.nome,
-      usuario: user.usuario,
-      perfil: user.perfil
+      usuario: user.usuario
     };
 
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
     // Registra auditoria de login
     await pool.query(
-      'INSERT INTO audit_log (entidade, entidade_id, acao, payload, ip_origem) VALUES (?, ?, ?, ?, ?)',
-      ['usuario', user.id, 'INSERT', JSON.stringify({ evento: 'LOGIN', usuario: user.usuario }), req.ip]
+      'INSERT INTO audit_log (entidade, entidade_id, acao, usuario_id, payload, ip_origem) VALUES (?, ?, ?, ?, ?, ?)',
+      ['usuario', user.id, 'INSERT', user.id, JSON.stringify({ evento: 'LOGIN', usuario: user.usuario }), req.ip]
     );
 
-    logger.info('Login realizado com sucesso.', { usuario: user.usuario, perfil: user.perfil, ip: req.ip });
+    logger.info('Login realizado com sucesso.', { usuario: user.usuario, ip: req.ip });
 
     return res.json({
       token,
       usuario: {
         id: user.id,
         nome: user.nome,
-        usuario: user.usuario,
-        perfil: user.perfil
+        usuario: user.usuario
       }
     });
 
@@ -83,7 +81,6 @@ async function me(req, res) {
 
 /**
  * POST /api/auth/logout
- * Logout simbólico (JWT é stateless; cliente deve descartar o token).
  */
 async function logout(req, res) {
   logger.info('Logout registrado.', { usuario: req.usuario?.usuario, ip: req.ip });

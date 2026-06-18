@@ -2,9 +2,6 @@ const pool = require('../config/database');
 
 class UnitRepository {
   async getRegistrationStats() {
-    // Query otimizada para ranking de unidades
-    // Em um sistema real, buscaríamos da tabela 'unidades_cadastramento'
-    // Como estamos em reconstrução, preparei a query que será usada
     const query = `
       SELECT 
         nome as unidade, 
@@ -15,12 +12,9 @@ class UnitRepository {
     `;
     
     try {
-      // Tenta buscar do banco
       const [rows] = await pool.query(query);
       return rows;
     } catch (error) {
-      // Fallback para dados de demonstração se a tabela não existir ainda
-      console.warn('Tabela unidades_cadastramento não encontrada. Usando dados mockados para o gráfico.');
       return [
         { unidade: 'CRAS I - Centro', total: 1250 },
         { unidade: 'CRAS II - Jardim Primavera', total: 980 },

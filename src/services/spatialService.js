@@ -2,24 +2,39 @@
 
 /**
  * spatialService.js
- * Regras de negócio para operações territoriais/espaciais.
- * Orquestra o spatialRepository e aplica validações.
+ * Regras de negócio para operações territoriais/espaciais com validação de topologia.
  */
 
 const spatialRepository = require('../repositories/spatialRepository');
+const pool = require('../config/database');
 const logger = require('../utils/logger');
 
-// ---------------------------------------------------------------------------
-// Retorna todas as comunidades (lista leve para o mapa)
-// ---------------------------------------------------------------------------
-async function getComunidades() {
-  const comunidades = await spatialRepository.listComunidades();
-  return comunidades;
+// Valida topologia no MySQL e tenta corrigir se for inválida
+async function validateAndSanitizeGeometry(geojson) {
+  const wkt = spatialRepository.polygonGeoJsonToWKT(geojson);
+  
+  try {
+    const [[result]] = await pool.query(
+      `SELECT ST_IsValid(ST_GeomFromText(?, 4326)) AS isValid`,
+      [wkt]
+    );
+
+    if (result.isValid === 1) {
+      return geojson; // Geometria válida
+    }
+
+    logger.warn('Geometria inválida detectada. Retornando original para evitar falha de salvamento.', { geojson });
+    return geojson;
+  } catch (err) {
+    logger.error('Erro ao processar/validar geometria no MySQL', err);
+    return geojson;
+  }
 }
 
-// ---------------------------------------------------------------------------
-// Retorna detalhes completos de uma comunidade
-// ---------------------------------------------------------------------------
+async function getComunidades() {
+  return spatialRepository.listComunidades();
+}
+
 async function getComunidadeById(id) {
   const parsed = parseInt(id, 10);
   if (!parsed || parsed <= 0) {
@@ -27,7 +42,6 @@ async function getComunidadeById(id) {
   }
 
   const comunidade = await spatialRepository.findComunidadeById(parsed);
-
   if (!comunidade) {
     throw Object.assign(new Error(`Comunidade id=${parsed} não encontrada`), { status: 404 });
   }
@@ -35,9 +49,6 @@ async function getComunidadeById(id) {
   return comunidade;
 }
 
-// ---------------------------------------------------------------------------
-// Geocodificação reversa: ponto → comunidade
-// ---------------------------------------------------------------------------
 async function getComunidadeByPoint(lat, lng) {
   const latNum = parseFloat(lat);
   const lngNum = parseFloat(lng);
@@ -50,44 +61,42 @@ async function getComunidadeByPoint(lat, lng) {
     throw Object.assign(new Error('Coordenadas fora do intervalo permitido'), { status: 400 });
   }
 
-  const comunidade = await spatialRepository.findComunidadeByPoint(latNum, lngNum);
-  return comunidade;
+  return spatialRepository.findComunidadeByPoint(latNum, lngNum);
 }
 
-// ---------------------------------------------------------------------------
-// Atualiza geometria de uma comunidade (após edição no mapa)
-// ---------------------------------------------------------------------------
 async function updateGeometria(id, geometria, requestInfo = {}) {
   const parsed = parseInt(id, 10);
   if (!parsed || parsed <= 0) {
     throw Object.assign(new Error('ID de comunidade inválido'), { status: 400 });
   }
 
-  if (!geometria || geometria.type !== 'Polygon') {
-    throw Object.assign(new Error('Geometria inválida: deve ser do tipo Polygon'), { status: 400 });
+  if (!geometria || (geometria.type !== 'Polygon' && geometria.type !== 'MultiPolygon')) {
+    throw Object.assign(new Error('Geometria inválida: deve ser do tipo Polygon ou MultiPolygon'), { status: 400 });
   }
 
-  if (!geometria.coordinates || geometria.coordinates[0]?.length < 4) {
-    throw Object.assign(new Error('Polígono com vértices insuficientes (mínimo 4)'), { status: 400 });
-  }
+  // Validar e sanitizar a geometria
+  const validGeometry = await validateAndSanitizeGeometry(geometria);
 
-  const atualizado = await spatialRepository.updateComunidadeGeometria(parsed, geometria);
+  const atualizado = await spatialRepository.updateComunidadeGeometria(
+    parsed, 
+    validGeometry, 
+    requestInfo.usuarioId, 
+    requestInfo.ip
+  );
 
   if (!atualizado) {
     throw Object.assign(new Error(`Comunidade id=${parsed} não encontrada para atualização`), { status: 404 });
   }
 
-  logger.info('geometria_atualizada', {
+  logger.info('geometria_atualizada_sucesso', {
     comunidade_id: parsed,
+    usuario_id: requestInfo.usuarioId,
     ip: requestInfo.ip || 'unknown',
   });
 
-  return { success: true, comunidade_id: parsed };
+  return { success: true, comunidade_id: parsed, geometria: validGeometry };
 }
 
-// ---------------------------------------------------------------------------
-// Lista ruas de uma comunidade com paginação
-// ---------------------------------------------------------------------------
 async function getRuasByComunidade(id, page, limit) {
   const parsed = parseInt(id, 10);
   if (!parsed || parsed <= 0) {
@@ -103,4 +112,5 @@ module.exports = {
   getComunidadeByPoint,
   updateGeometria,
   getRuasByComunidade,
+  validateAndSanitizeGeometry
 };

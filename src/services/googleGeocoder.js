@@ -1,9 +1,5 @@
 const axios = require('axios');
 
-/**
- * ASA v3 - Google Geocoding Service
- * Interface com a Google Maps Platform Geocoding API.
- */
 class GoogleGeocoder {
   constructor() {
     this.apiKey = process.env.GOOGLE_MAPS_KEY;
@@ -32,8 +28,6 @@ class GoogleGeocoder {
 
       if (response.data.status === 'OK') {
         const result = response.data.results[0];
-        
-        // Mapeamento de componentes para facilitar o uso no frontend
         const components = result.address_components;
         const getComp = (type) => components.find(c => c.types.includes(type))?.long_name || '';
 
@@ -64,9 +58,6 @@ class GoogleGeocoder {
     }
   }
 
-  /**
-   * Calcula o nível de confiança baseado no tipo de localização retornado pelo Google
-   */
   calculateConfidence(result) {
     const type = result.geometry.location_type;
     const precision = result.types[0];

@@ -42,9 +42,13 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
           <span class="nav-label">Editor Geo</span>
         </li>
-        <li class="nav-item" data-view="cleaner" title="Limpar Base">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7l-.867 12.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v3M4 7h16"/></svg>
-          <span class="nav-label">Limpar Base</span>
+        <li class="nav-item" data-view="cleaner" title="Gestão e Remoção">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+          <span class="nav-label">Gestão Base</span>
+        </li>
+        <li class="nav-item" data-view="sobre" title="Ajuda e Manual">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          <span class="nav-label">Ajuda</span>
         </li>
       </ul>
 
@@ -75,6 +79,15 @@
       </div>
       <div id="searchResultsList" class="search-results-list" style="display: none;"></div>
       <div id="map"></div>
+      
+      <!-- Botão Flutuante do Limite de Duque de Caxias -->
+      <button id="btnFloatingBoundary" class="btn-floating-boundary" title="Exibir/Ocultar Limite de Duque de Caxias">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        <span>Limite Caxias</span>
+      </button>
+
       <div class="address-search-container">
         <input type="text" id="addressSearchInput" placeholder="Pesquisar rua, nº, bairro ou CEP..." class="address-search-input">
         <button id="btnAddressSearch" class="btn-address-search">
@@ -96,6 +109,13 @@
           <div class="action-buttons">
             <button id="btnSelectAll" class="btn btn-primary">Ver Todos</button>
             <button id="btnClearAll" class="btn btn-outline">Limpar</button>
+          </div>
+          <div class="boundary-toggle-wrapper">
+            <label class="boundary-toggle-label">
+              <input type="checkbox" id="chkToggleBoundary" class="boundary-toggle-checkbox">
+              <span class="boundary-toggle-slider"></span>
+              <span class="boundary-toggle-text">Limite de Duque de Caxias</span>
+            </label>
           </div>
         </div>
 
@@ -221,52 +241,298 @@
     <section id="view-cleaner" class="view">
       <div class="view-content overlay-view" style="display: flex; flex-direction: column; height: 100%; width: 100%; padding: 40px; box-sizing: border-box; overflow: hidden; background: var(--bg-dark);">
         <header class="view-header" style="flex-shrink: 0; margin-bottom: 25px;">
-          <h2 style="font-size: 1.85rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">Gestão de Comunidades</h2>
-          <p style="color: var(--text-secondary); font-size: 0.95rem;">Edite nomes, bairros e exclua poligonais em lote para organizar a base geográfica.</p>
+          <h2 style="font-size: 1.85rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">Gestão Territorial</h2>
+          <p style="color: var(--text-secondary); font-size: 0.95rem;">Organize a base de dados editando comunidades, criando complexos e associando polígonos.</p>
         </header>
 
-        <!-- Barra de ferramentas/pesquisa -->
-        <div class="cleaner-toolbar" style="display: flex; gap: 15px; align-items: center; margin-bottom: 20px; flex-shrink: 0;">
-          <input type="text" id="cleanerSearchInput" placeholder="Pesquisar por nome da comunidade ou bairro..." style="flex: 1; height: 42px; padding: 0 15px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-sidebar); color: var(--text-primary); font-family: inherit; font-size: 0.95rem;">
-          
-          <button id="btnSelectAllCleaner" class="btn btn-outline" style="height: 42px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 15px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-primary); font-weight: 600; cursor: pointer;">
-            Selecionar Todos
-          </button>
-          
-          <button id="btnClearSelectionCleaner" class="btn btn-outline" style="height: 42px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 15px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-primary); font-weight: 600; cursor: pointer;">
-            Desmarcar Todos
-          </button>
-
-          <button id="btnDeleteSelectedCleaner" class="btn btn-danger" style="height: 42px; display: flex; align-items: center; justify-content: center; gap: 8px; background-color: var(--danger); border: none; color: white; padding: 0 22px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: opacity 0.2s;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-            Excluir Selecionados (<span id="selectedCountSpan">0</span>)
-          </button>
+        <!-- Abas de Gestão -->
+        <div class="cleaner-tabs" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 0; flex-shrink: 0;">
+          <button id="tabBtnComunidades" class="cleaner-tab-btn active" style="background: none; border: none; color: var(--text-primary); font-size: 1rem; font-weight: 600; padding: 12px 20px; cursor: pointer; border-bottom: 3px solid var(--accent); transition: all 0.2s;">Comunidades</button>
+          <button id="tabBtnComplexos" class="cleaner-tab-btn" style="background: none; border: none; color: var(--text-secondary); font-size: 1rem; font-weight: 600; padding: 12px 20px; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s;">Complexos</button>
         </div>
 
-        <!-- Dica de edição -->
-        <div class="cleaner-hint" style="flex-shrink: 0; margin-bottom: 14px;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          Clique em <strong style="color: var(--accent); margin: 0 4px;">Editar</strong> para alterar nome/bairro. Comunidades em <span style="color: rgba(239,68,68,0.75); font-style:italic; margin: 0 2px;">vermelho itálico</span> estão sem nome.
+        <!-- CONTEÚDO TAB: COMUNIDADES -->
+        <div id="tabContentComunidades" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+          <!-- Barra de ferramentas/pesquisa -->
+          <div class="cleaner-toolbar" style="display: flex; gap: 15px; align-items: center; margin-bottom: 20px; flex-shrink: 0;">
+            <input type="text" id="cleanerSearchInput" placeholder="Pesquisar por nome da comunidade ou complexo..." style="flex: 1; height: 42px; padding: 0 15px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-sidebar); color: var(--text-primary); font-family: inherit; font-size: 0.95rem;">
+            
+            <button id="btnSelectAllCleaner" class="btn btn-outline" style="height: 42px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 15px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-primary); font-weight: 600; cursor: pointer;">
+              Selecionar Todos
+            </button>
+            
+            <button id="btnClearSelectionCleaner" class="btn btn-outline" style="height: 42px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 15px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-primary); font-weight: 600; cursor: pointer;">
+              Desmarcar Todos
+            </button>
+
+            <button id="btnDeleteSelectedCleaner" class="btn btn-danger" style="height: 42px; display: flex; align-items: center; justify-content: center; gap: 8px; background-color: var(--danger); border: none; color: white; padding: 0 22px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: opacity 0.2s;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              Excluir Selecionados (<span id="selectedCountSpan">0</span>)
+            </button>
+          </div>
+
+          <!-- Dica de edição -->
+          <div class="cleaner-hint" style="flex-shrink: 0; margin-bottom: 14px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Dê um <strong style="color: var(--accent); margin: 0 4px;">duplo clique</strong> em qualquer célula ou use o botão <strong style="color: var(--accent); margin: 0 4px;">Editar</strong> (na coluna Ações) para alterar os dados.
+          </div>
+
+          <!-- Tabela de Comunidades -->
+          <div class="cleaner-table-wrapper" style="flex: 1; overflow-y: auto;">
+            <table class="audit-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+              <thead style="position: sticky; top: 0; background: var(--bg-sidebar); z-index: 10; border-bottom: 2px solid var(--border); color: var(--text-secondary); font-size: 0.9rem;">
+                <tr>
+                  <th style="width: 50px; padding: 15px; text-align: center;">
+                    <input type="checkbox" id="headerCheckboxCleaner" style="width: 18px; height: 18px; cursor: pointer;">
+                  </th>
+                  <th style="padding: 15px; color: var(--text-primary); font-weight: 600;">Comunidade</th>
+                  <th style="padding: 15px; color: var(--text-primary); font-weight: 600;">Complexo</th>
+                  <th style="padding: 15px; color: var(--text-primary); font-weight: 600; text-align: center; width: 220px;">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="cleanerTableBody">
+                <!-- Preenchido dinamicamente via JS -->
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        <!-- Tabela de Comunidades -->
-        <div class="cleaner-table-wrapper" style="flex: 1; overflow-y: auto;">
-          <table class="audit-table" style="width: 100%; border-collapse: collapse; text-align: left;">
-            <thead style="position: sticky; top: 0; background: var(--bg-sidebar); z-index: 10; border-bottom: 2px solid var(--border); color: var(--text-secondary); font-size: 0.9rem;">
-              <tr>
-                <th style="width: 50px; padding: 15px; text-align: center;">
-                  <input type="checkbox" id="headerCheckboxCleaner" style="width: 18px; height: 18px; cursor: pointer;">
-                </th>
-                <th style="padding: 15px; color: var(--text-primary); font-weight: 600;">Comunidade</th>
-                <th style="padding: 15px; color: var(--text-primary); font-weight: 600;">Bairro / Referência</th>
-                <th style="padding: 15px; color: var(--text-primary); font-weight: 600;">Tipo</th>
-                <th style="padding: 15px; color: var(--text-primary); font-weight: 600; text-align: center; width: 160px;">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="cleanerTableBody">
-              <!-- Preenchido dinamicamente via JS -->
-            </tbody>
-          </table>
+        <!-- CONTEÚDO TAB: COMPLEXOS -->
+        <div id="tabContentComplexos" style="display: none; flex-direction: column; flex: 1; overflow: hidden;">
+          <!-- Barra de ferramentas/pesquisa -->
+          <div class="cleaner-toolbar" style="display: flex; gap: 15px; align-items: center; margin-bottom: 20px; flex-shrink: 0;">
+            <input type="text" id="complexosSearchInput" placeholder="Pesquisar complexo..." style="flex: 1; height: 42px; padding: 0 15px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-sidebar); color: var(--text-primary); font-family: inherit; font-size: 0.95rem;">
+            
+            <button id="btnCreateComplex" class="btn btn-primary" style="height: 42px; display: flex; align-items: center; justify-content: center; gap: 8px; background-color: var(--accent); border: none; color: white; padding: 0 22px; border-radius: 8px; font-weight: 600; cursor: pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Novo Complexo
+            </button>
+          </div>
+
+          <!-- Dica de edição -->
+          <div class="cleaner-hint" style="flex-shrink: 0; margin-bottom: 14px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Gerencie complexos, cores padrão e associe/desassocie comunidades diretamente nas tags.
+          </div>
+
+          <!-- Tabela de Complexos -->
+          <div class="cleaner-table-wrapper" style="flex: 1; overflow-y: auto;">
+            <table class="audit-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+              <thead style="position: sticky; top: 0; background: var(--bg-sidebar); z-index: 10; border-bottom: 2px solid var(--border); color: var(--text-secondary); font-size: 0.9rem;">
+                <tr>
+                  <th style="padding: 15px; color: var(--text-primary); font-weight: 600;">Nome do Complexo</th>
+                  <th style="padding: 15px; color: var(--text-primary); font-weight: 600; width: 120px;">Cor Padrão</th>
+                  <th style="padding: 15px; color: var(--text-primary); font-weight: 600;">Comunidades Associadas</th>
+                  <th style="padding: 15px; color: var(--text-primary); font-weight: 600; text-align: center; width: 140px;">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="complexosTableBody">
+                <!-- Preenchido dinamicamente via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- View: SOBRE / AJUDA -->
+    <section id="view-sobre" class="view">
+      <div class="view-content overlay-view" style="display: flex; flex-direction: column; height: 100%; width: 100%; padding: 40px; box-sizing: border-box; overflow-y: auto; background: var(--bg-dark);">
+        <header class="view-header" style="flex-shrink: 0; margin-bottom: 25px;">
+          <h2 style="font-size: 1.85rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">Sobre o SIMAC</h2>
+          <p style="color: var(--text-secondary); font-size: 0.95rem;">Manual de uso rápido e resumo das novidades da nova versão do sistema.</p>
+        </header>
+
+        <div class="sobre-container" style="max-width: 900px; display: flex; flex-direction: column; gap: 30px; line-height: 1.6; color: var(--text-primary); padding-bottom: 40px;">
+          
+          <!-- Introdução Geral do Sistema -->
+          <div class="sobre-card" style="background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <h3 style="font-size: 1.35rem; font-weight: 700; color: var(--accent); margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              Sobre o SIMAC
+            </h3>
+            <p style="margin: 0; margin-bottom: 14px; font-size: 1rem; color: var(--text-primary); font-weight: 500;">
+              O SIMAC (Sistema de Inteligência e Monitoramento de Ação Comunitária) é uma plataforma avançada de inteligência territorial focada no mapeamento e gestão das áreas de interesse social e complexos comunitários do município de Duque de Caxias.
+            </p>
+            <p style="margin: 0; margin-bottom: 14px; font-size: 0.95rem; color: var(--text-secondary);">
+              Através do cruzamento de polígonos espaciais, dados de logradouros, CEPs oficiais e controle de visibilidade em tempo real, o sistema auxilia no planejamento urbano, na entrega de serviços públicos e na identificação exata da localização de cada comunidade.
+            </p>
+            <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px; padding: 14px; display: flex; align-items: flex-start; gap: 10px;">
+              <span style="color: #10b981; font-size: 1.2rem; line-height: 1;">🛡️</span>
+              <p style="margin: 0; font-size: 0.88rem; color: var(--text-primary);">
+                <strong>Conformidade Técnica:</strong> Todos os dados e polígonos importados estão 100% de acordo com o <strong>Novo Formato GeoJSON (SRID 4326)</strong>. O sistema realiza validação topológica ativa contra interseções inválidas, autocorreções de anéis e respeita rigorosamente a hierarquia de cores dos complexos comunitários.
+              </p>
+            </div>
+          </div>
+
+          <!-- Introdução de Mudanças -->
+          <div class="sobre-card" style="background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              O que mudou do sistema antigo para o novo?
+            </h3>
+            <p style="margin: 0; font-size: 0.98rem; color: var(--text-secondary);">
+              Fizemos uma modernização completa no sistema para deixá-lo mais bonito, fácil de mexer e livre de falhas de gravação. Abaixo você confere o comparativo e as novas ferramentas de controle.
+            </p>
+          </div>
+
+          <!-- Tabela Comparativa Resumida -->
+          <div class="sobre-card" style="background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <h3 style="font-size: 1.2rem; font-weight: 600; margin: 0 0 16px 0; color: var(--text-primary);">Resumo Visual Rápido</h3>
+            <div style="overflow-x: auto;">
+              <table class="audit-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+                <thead>
+                  <tr style="border-bottom: 2px solid var(--border); color: var(--text-secondary);">
+                    <th style="padding: 12px; font-weight: 600; color: var(--text-primary);">O que mudou</th>
+                    <th style="padding: 12px; font-weight: 600; color: var(--text-primary);">Como era antes</th>
+                    <th style="padding: 12px; font-weight: 600; color: var(--text-primary);">Como está agora</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 12px; font-weight: 500;">Seletor de Cores</td>
+                    <td style="padding: 12px; color: var(--text-secondary);">Lista de texto chata (Red, Blue)</td>
+                    <td style="padding: 12px; color: var(--accent); font-weight: 500;">Quadrinho colorido + paleta livre + digitação de código</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 12px; font-weight: 500;">Tabela de Comunidades</td>
+                    <td style="padding: 12px; color: var(--text-secondary);">Apertada, com coluna de cor inútil</td>
+                    <td style="padding: 12px; color: var(--accent); font-weight: 500;">Espaçosa, focada nas ações e dados importantes</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 12px; font-weight: 500;">Botão do Olho</td>
+                    <td style="padding: 12px; color: var(--text-secondary);">Te mandava para a página inicial</td>
+                    <td style="padding: 12px; color: var(--accent); font-weight: 500;">Oculta/Exibe no mapa sem sair do lugar</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 12px; font-weight: 500;">Painel de Complexos</td>
+                    <td style="padding: 12px; color: var(--text-secondary);">Não existia ou era muito limitado</td>
+                    <td style="padding: 12px; color: var(--accent); font-weight: 500;">Completo (cria, edita, deleta, muda cor e gerencia comunidades)</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 12px; font-weight: 500;">Caixas de Texto e Formulários</td>
+                    <td style="padding: 12px; color: var(--text-secondary);">Cada um de um jeito e desalinhados</td>
+                    <td style="padding: 12px; color: var(--accent); font-weight: 500;">Todos padronizados, modernos e sem barras de rolagem chatas</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Detalhamento dos Pontos -->
+          <div style="display: flex; flex-direction: column; gap: 20px;">
+            
+            <!-- 1. Cores Mais Bonitas -->
+            <div style="background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+              <h4 style="font-size: 1.15rem; font-weight: 600; margin: 0 0 10px 0; color: var(--text-primary); display: flex; align-items: center; gap: 10px;">
+                <span style="background: var(--accent); color: white; border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: bold;">1</span>
+                Cores Mais Bonitas e Modernas (Visual Geral)
+              </h4>
+              <p style="margin: 0; margin-bottom: 8px; font-size: 0.95rem; color: var(--text-secondary);">
+                <strong>Antes:</strong> O sistema tinha cores básicas e parecia um site antigo.
+              </p>
+              <p style="margin: 0; font-size: 0.95rem; color: var(--text-primary);">
+                <strong>Agora:</strong> O visual está muito mais moderno. Ele usa cores mais suaves, tons escuros elegantes (Modo Escuro / Dark Mode), sombras nos painéis e letras mais bonitas e fáceis de ler. Tudo parece mais limpo e profissional.
+              </p>
+            </div>
+
+            <!-- 2. A Grande Mudança nas Cores -->
+            <div style="background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+              <h4 style="font-size: 1.15rem; font-weight: 600; margin: 0 0 10px 0; color: var(--text-primary); display: flex; align-items: center; gap: 10px;">
+                <span style="background: var(--accent); color: white; border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: bold;">2</span>
+                A Grande Mudança nas Cores (Como escolher e editar cores)
+              </h4>
+              <p style="margin: 0; margin-bottom: 12px; font-size: 0.95rem; color: var(--text-secondary);">
+                Esta foi uma das partes que mais mudou para facilitar a sua vida:
+              </p>
+              <div style="display: flex; flex-direction: column; gap: 10px; padding-left: 10px; border-left: 3px solid var(--border);">
+                <p style="margin: 0; font-size: 0.95rem; color: var(--text-secondary);">
+                  <strong>Antes (Lista Fixa):</strong> Para escolher a cor de uma comunidade ou complexo, você era obrigado a escolher de uma lista suspensa (dropdown) com poucas opções de nomes de cores (como "Red", "Blue", "Green"). Não dava para colocar uma cor personalizada.
+                </p>
+                <p style="margin: 0; font-size: 0.95rem; color: var(--text-primary);">
+                  <strong>Agora (Seletor Inteligente Híbrido):</strong>
+                </p>
+                <ul style="margin: 0; padding-left: 20px; font-size: 0.95rem; color: var(--text-primary); display: flex; flex-direction: column; gap: 6px;">
+                  <li>Você não fica preso a uma lista! Quando você vai criar ou editar, aparece um campo de cor real (um quadradinho colorido).</li>
+                  <li>Você pode clicar nesse quadradinho para abrir uma caixinha de cores e escolher qualquer tom que quiser arrastando o mouse.</li>
+                  <li>Se você souber o código da cor (ex: #FF5733), você pode simplesmente digitar ou colar esse código no campo de texto.</li>
+                  <li>Para ajudar, ao lado do campo também mostramos bolinhas com sugestões de cores rápidas para você clicar e aplicar na hora.</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- 3. Gestão de Comunidades -->
+            <div style="background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+              <h4 style="font-size: 1.15rem; font-weight: 600; margin: 0 0 10px 0; color: var(--text-primary); display: flex; align-items: center; gap: 10px;">
+                <span style="background: var(--accent); color: white; border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: bold;">3</span>
+                Gestão de Comunidades
+              </h4>
+              <p style="margin: 0; margin-bottom: 12px; font-size: 0.95rem; color: var(--text-secondary);">
+                A tela onde você lista e edita as Comunidades ficou muito mais organizada:
+              </p>
+              <ul style="margin: 0; padding-left: 20px; font-size: 0.95rem; color: var(--text-primary); display: flex; flex-direction: column; gap: 10px;">
+                <li><strong>Coluna de Cores Removida:</strong> Tiramos a coluna que mostrava o nome da cor por escrito na tabela. Isso liberou muito mais espaço na tela para o que importa.</li>
+                <li><strong>Ações Mais Claras:</strong> Os botões de ação (como Editar e Excluir) agora estão organizados em uma coluna "Ações" mais larga, bem arrumados e fáceis de clicar.</li>
+                <li>
+                  <strong>Olhinho (Ocultar da Tela Inicial):</strong>
+                  <br>
+                  <span style="color: var(--text-secondary);">Antes:</span> Quando você clicava no ícone do olhinho para ocultar/mostrar, o sistema recarregava a página inteira ou te mandava de volta para a tela inicial do mapa.
+                  <br>
+                  <span style="color: var(--text-primary);">Agora:</span> Ao clicar no olhinho, a comunidade é ocultada apenas da listagem do mapa na tela inicial, mas você continua na mesma página onde estava, sem nenhuma perturbação ou redirecionamento indesejado.
+                </li>
+                <li><strong>Lista com Identificação:</strong> Na hora de editar a comunidade, as cores agora mostram entre parênteses a qual comunidade aquela cor pertence, facilitando a identificação.</li>
+              </ul>
+            </div>
+
+            <!-- 4. Gestão de Complexos -->
+            <div style="background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+              <h4 style="font-size: 1.15rem; font-weight: 600; margin: 0 0 10px 0; color: var(--text-primary); display: flex; align-items: center; gap: 10px;">
+                <span style="background: var(--accent); color: white; border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: bold;">4</span>
+                Gestão de Complexos (A grande novidade!)
+              </h4>
+              <p style="margin: 0; margin-bottom: 8px; font-size: 0.95rem; color: var(--text-secondary);">
+                <strong>Antes:</strong> Não existia uma forma fácil de gerenciar os Complexos de maneira independente.
+              </p>
+              <p style="margin: 0; margin-bottom: 12px; font-size: 0.95rem; color: var(--text-primary);">
+                <strong>Agora:</strong> Existe uma página completa dedicada aos Complexos. Nessa página você vê uma tabela organizada contendo:
+              </p>
+              <ul style="margin: 0 0 16px 0; padding-left: 20px; font-size: 0.95rem; color: var(--text-primary); display: flex; flex-direction: column; gap: 6px;">
+                <li>Nome do Complexo</li>
+                <li>Cor Padrão (mostrada com um quadradinho colorido real)</li>
+                <li>Comunidades Associadas (uma lista de quais comunidades fazem parte dele)</li>
+                <li><strong>Coluna de Ações:</strong> Igualzinho ao painel de Comunidades, permitindo que você gerencie tudo no mesmo padrão de botões.</li>
+              </ul>
+              <div style="background: var(--bg-dark); border-radius: 8px; padding: 16px;">
+                <h5 style="margin: 0 0 8px 0; font-size: 0.9rem; font-weight: 600; color: var(--accent);">O que você pode fazer no Painel de Complexos:</h5>
+                <ul style="margin: 0; padding-left: 20px; font-size: 0.9rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 4px;">
+                  <li>Mudar o nome de um complexo existente.</li>
+                  <li>Adicionar novos complexos do zero.</li>
+                  <li>Editar e remover complexos que não são mais necessários.</li>
+                  <li>Mudar a cor padrão dele (usando o novo seletor de cores livre).</li>
+                  <li>Associar ou desassociar comunidades a ele.</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- 5. Telas de Criação -->
+            <div style="background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+              <h4 style="font-size: 1.15rem; font-weight: 600; margin: 0 0 10px 0; color: var(--text-primary); display: flex; align-items: center; gap: 10px;">
+                <span style="background: var(--accent); color: white; border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: bold;">5</span>
+                Telas de Criação e Caixas de Texto Padronizadas
+              </h4>
+              <p style="margin: 0; margin-bottom: 8px; font-size: 0.95rem; color: var(--text-secondary);">
+                <strong>Antes:</strong> Os campos para digitar "Nova Comunidade" ou "Novo Complexo" eram desalinhados, cada um de um tamanho e com estilos diferentes.
+              </p>
+              <p style="margin: 0; font-size: 0.95rem; color: var(--text-primary);">
+                <strong>Agora:</strong> Todas as caixas de texto, botões e campos de seleção foram padronizados. Eles usam o mesmo tamanho, bordas arredondadas suaves, efeitos visuais quando você clica neles (foco) e estão perfeitamente alinhados, deixando o preenchimento muito mais simples e bonito.
+                <br><br>
+                <strong>Sem Barras de Rolagem Chatas:</strong> Os modais (janelas flutuantes) de edição de comunidades e complexos foram refatorados. Organizamos as informações para que caibam perfeitamente na tela, eliminando aquelas barras de rolagem internas que atrapalhavam a edição e deixavam o visual feio.
+              </p>
+            </div>
+
+          </div>
+
         </div>
       </div>
     </section>
@@ -282,6 +548,293 @@
         </div>
       </div>
     </div>
+
+    <!-- Janela Suspensa (Modal) para Edição de Comunidades -->
+    <div id="editCommunityModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; justify-content: center; align-items: center;">
+      <div class="modal-content" style="background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 16px; padding: 30px; width: 540px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); position: relative;">
+        <header class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 16px;">
+          <h2 id="editModalTitle" style="font-size: 1.35rem; font-weight: 700; color: var(--text-primary); margin: 0; letter-spacing: -0.02em;">Editar Comunidade</h2>
+          <button id="btnCancelEditModal" class="btn-close-modal" style="background: none; border: none; color: var(--text-secondary); font-size: 1.8rem; cursor: pointer; padding: 0; line-height: 1; transition: color 0.2s;">&times;</button>
+        </header>
+        
+        <div style="display: flex; flex-direction: column; gap: 18px; margin-top: 5px;">
+          <!-- Nome -->
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <label style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Nome da Comunidade</label>
+            <input type="text" id="editModalName" style="height: 42px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-dark); color: var(--text-primary); font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s;">
+          </div>
+
+          <!-- Complexo -->
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <label style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Complexo Associado</label>
+            <select id="editModalComplex" style="height: 42px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-dark); color: var(--text-primary); font-family: inherit; font-size: 0.95rem; outline: none;">
+              <!-- Preenchido via JS -->
+            </select>
+          </div>
+
+          <!-- Novo Complexo Campo -->
+          <div id="editModalNewComplexGroup" style="display: none; flex-direction: column; gap: 8px;">
+            <label style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Nome do Novo Complexo</label>
+            <input type="text" id="editModalNewComplexName" style="height: 42px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-dark); color: var(--text-primary); font-family: inherit; font-size: 0.95rem;" placeholder="Digite o nome do complexo...">
+          </div>
+
+          <!-- Seletor de cor se for criar novo -->
+          <div id="editModalColorGroup" style="display: none; flex-direction: column; gap: 10px;">
+            <label style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Cor Padrão do Complexo</label>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+              <span class="color-swatch" data-target="editModalColorHex" style="background:#ff0000;" title="Vermelho"></span>
+              <span class="color-swatch" data-target="editModalColorHex" style="background:#ff8c00;" title="Laranja"></span>
+              <span class="color-swatch" data-target="editModalColorHex" style="background:#ffcc00;" title="Amarelo"></span>
+              <span class="color-swatch" data-target="editModalColorHex" style="background:#00aa00;" title="Verde"></span>
+              <span class="color-swatch" data-target="editModalColorHex" style="background:#00cc99;" title="Verde-Água"></span>
+              <span class="color-swatch" data-target="editModalColorHex" style="background:#0077ff;" title="Azul"></span>
+              <span class="color-swatch" data-target="editModalColorHex" style="background:#00007f;" title="Azul Escuro"></span>
+              <span class="color-swatch" data-target="editModalColorHex" style="background:#aa00ff;" title="Púrpura"></span>
+              <span class="color-swatch" data-target="editModalColorHex" style="background:#ff5500;" title="Laranja Escuro"></span>
+              <span class="color-swatch" data-target="editModalColorHex" style="background:#aa007f;" title="Magenta"></span>
+              <span class="color-swatch" data-target="editModalColorHex" style="background:#aa0000;" title="Vermelho Escuro"></span>
+              <span class="color-swatch" data-target="editModalColorHex" style="background:#cccccc;" title="Cinza"></span>
+              <label title="Cor personalizada" style="cursor:pointer; display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; border:2px dashed var(--text-secondary); background:transparent; overflow:hidden; flex-shrink:0;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;"><path d="M12 2L2 22h20L12 2z"/><line x1="12" y1="9" x2="12" y2="13"/><circle cx="12" cy="17" r="0.5" fill="currentColor"/></svg>
+                <input type="color" id="editModalColorPicker" value="#ff0000" style="opacity:0; position:absolute; width:1px; height:1px;">
+              </label>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span id="editModalColorPreview" style="display:inline-block; width:22px; height:22px; border-radius:50%; background:#ff0000; border:2px solid rgba(255,255,255,0.25); flex-shrink:0;"></span>
+              <input type="text" id="editModalColorHex" value="#ff0000" maxlength="7" placeholder="#rrggbb" style="height:36px; padding:0 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg-dark); color:var(--text-primary); font-family:monospace; font-size:0.9rem; flex:1; outline:none;">
+            </div>
+          </div>
+
+        </div>
+
+        <footer style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--border); padding-top: 20px; margin-top: 10px;">
+          <button id="btnDeleteEditModal" class="btn btn-danger" style="margin-right: auto; padding: 0 18px; height: 40px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; transition: background 0.2s;">Excluir Comunidade</button>
+          <button id="btnSaveEditModal" class="btn btn-primary" style="padding: 0 24px; height: 40px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; background: var(--accent); color: white; transition: background 0.2s;">Salvar Alterações</button>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Janela Suspensa (Modal) para Edição de Complexos -->
+    <div id="editComplexModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; justify-content: center; align-items: center;">
+      <div class="modal-content" style="background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 16px; padding: 30px; width: 560px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); position: relative;">
+        <header class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 16px;">
+          <h2 id="editComplexModalTitle" style="font-size: 1.35rem; font-weight: 700; color: var(--text-primary); margin: 0; letter-spacing: -0.02em;">Editar Complexo</h2>
+          <button id="btnCancelComplexModal" class="btn-close-modal" style="background: none; border: none; color: var(--text-secondary); font-size: 1.8rem; cursor: pointer; padding: 0; line-height: 1; transition: color 0.2s;">&times;</button>
+        </header>
+        
+        <div style="display: flex; flex-direction: column; gap: 18px; margin-top: 5px;">
+          <!-- Nome do Complexo -->
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <label style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Nome do Complexo</label>
+            <input type="text" id="editComplexModalName" style="height: 42px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-dark); color: var(--text-primary); font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s;">
+          </div>
+
+          <!-- Cor Padrão do Complexo -->
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <label style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Cor Padrão do Complexo</label>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+              <span class="color-swatch" data-target="editComplexModalColorHex" style="background:#ff0000;" title="Vermelho"></span>
+              <span class="color-swatch" data-target="editComplexModalColorHex" style="background:#ff8c00;" title="Laranja"></span>
+              <span class="color-swatch" data-target="editComplexModalColorHex" style="background:#ffcc00;" title="Amarelo"></span>
+              <span class="color-swatch" data-target="editComplexModalColorHex" style="background:#00aa00;" title="Verde"></span>
+              <span class="color-swatch" data-target="editComplexModalColorHex" style="background:#00cc99;" title="Verde-Água"></span>
+              <span class="color-swatch" data-target="editComplexModalColorHex" style="background:#0077ff;" title="Azul"></span>
+              <span class="color-swatch" data-target="editComplexModalColorHex" style="background:#00007f;" title="Azul Escuro"></span>
+              <span class="color-swatch" data-target="editComplexModalColorHex" style="background:#aa00ff;" title="Púrpura"></span>
+              <span class="color-swatch" data-target="editComplexModalColorHex" style="background:#ff5500;" title="Laranja Escuro"></span>
+              <span class="color-swatch" data-target="editComplexModalColorHex" style="background:#aa007f;" title="Magenta"></span>
+              <span class="color-swatch" data-target="editComplexModalColorHex" style="background:#aa0000;" title="Vermelho Escuro"></span>
+              <span class="color-swatch" data-target="editComplexModalColorHex" style="background:#cccccc;" title="Cinza"></span>
+              <label title="Cor personalizada" style="cursor:pointer; display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; border:2px dashed var(--text-secondary); background:transparent; overflow:hidden; flex-shrink:0;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;"><path d="M12 2L2 22h20L12 2z"/><line x1="12" y1="9" x2="12" y2="13"/><circle cx="12" cy="17" r="0.5" fill="currentColor"/></svg>
+                <input type="color" id="editComplexModalColorPicker" value="#ff0000" style="opacity:0; position:absolute; width:1px; height:1px;">
+              </label>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span id="editComplexModalColorPreview" style="display:inline-block; width:22px; height:22px; border-radius:50%; background:#ff0000; border:2px solid rgba(255,255,255,0.25); flex-shrink:0;"></span>
+              <input type="text" id="editComplexModalColorHex" value="#ff0000" maxlength="7" placeholder="#rrggbb" style="height:36px; padding:0 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg-dark); color:var(--text-primary); font-family:monospace; font-size:0.9rem; flex:1; outline:none;">
+            </div>
+          </div>
+
+
+          <!-- Comunidades Associadas -->
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <label style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Comunidades Associadas</label>
+            <div id="editComplexModalComsList" style="display: flex; flex-wrap: wrap; gap: 8px; padding: 0; border: none; background: transparent; min-height: unset; max-height: unset; overflow-y: visible;">
+              <!-- Tags populated dynamically -->
+            </div>
+          </div>
+
+          <!-- Adicionar Comunidade ao Complexo -->
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <label style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Associar Nova Comunidade</label>
+            <select id="editComplexModalAddComSelect" style="height: 42px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-dark); color: var(--text-primary); font-family: inherit; font-size: 0.95rem; outline: none;">
+              <!-- Comunidades disponíveis populated dynamically -->
+            </select>
+          </div>
+        </div>
+
+        <footer style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--border); padding-top: 20px; margin-top: 10px;">
+          <button id="btnDeleteComplexModal" class="btn btn-danger" style="margin-right: auto; padding: 0 18px; height: 40px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; transition: background 0.2s;">Excluir Complexo</button>
+          <button id="btnSaveComplexModal" class="btn btn-primary" style="padding: 0 24px; height: 40px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; background: var(--accent); color: white; transition: background 0.2s;">Salvar Alterações</button>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Modal para Criar Novo Complexo -->
+    <div id="createComplexModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; justify-content: center; align-items: center;">
+      <div class="modal-content" style="background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 16px; padding: 30px; width: 480px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); position: relative;">
+        <header class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 16px;">
+          <h2 style="font-size: 1.35rem; font-weight: 700; color: var(--text-primary); margin: 0; letter-spacing: -0.02em;">Criar Novo Complexo</h2>
+          <button id="btnCancelCreateComplexModal" class="btn-close-modal" style="background: none; border: none; color: var(--text-secondary); font-size: 1.8rem; cursor: pointer; padding: 0; line-height: 1;">&times;</button>
+        </header>
+        
+        <div style="display: flex; flex-direction: column; gap: 18px; margin-top: 5px;">
+          <!-- Nome do Complexo -->
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <label style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Nome do Complexo</label>
+            <input type="text" id="createComplexModalName" style="height: 42px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-dark); color: var(--text-primary); font-family: inherit; font-size: 0.95rem; outline: none;" placeholder="Digite o nome do complexo...">
+          </div>
+
+          <!-- Cor Padrão do Complexo -->
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <label style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Cor Padrão do Complexo</label>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+              <span class="color-swatch" data-target="createComplexModalColorHex" style="background:#ff0000;" title="Vermelho"></span>
+              <span class="color-swatch" data-target="createComplexModalColorHex" style="background:#ff8c00;" title="Laranja"></span>
+              <span class="color-swatch" data-target="createComplexModalColorHex" style="background:#ffcc00;" title="Amarelo"></span>
+              <span class="color-swatch" data-target="createComplexModalColorHex" style="background:#00aa00;" title="Verde"></span>
+              <span class="color-swatch" data-target="createComplexModalColorHex" style="background:#00cc99;" title="Verde-Água"></span>
+              <span class="color-swatch" data-target="createComplexModalColorHex" style="background:#0077ff;" title="Azul"></span>
+              <span class="color-swatch" data-target="createComplexModalColorHex" style="background:#00007f;" title="Azul Escuro"></span>
+              <span class="color-swatch" data-target="createComplexModalColorHex" style="background:#aa00ff;" title="Púrpura"></span>
+              <span class="color-swatch" data-target="createComplexModalColorHex" style="background:#ff5500;" title="Laranja Escuro"></span>
+              <span class="color-swatch" data-target="createComplexModalColorHex" style="background:#aa007f;" title="Magenta"></span>
+              <span class="color-swatch" data-target="createComplexModalColorHex" style="background:#aa0000;" title="Vermelho Escuro"></span>
+              <span class="color-swatch" data-target="createComplexModalColorHex" style="background:#cccccc;" title="Cinza"></span>
+              <label title="Cor personalizada" style="cursor:pointer; display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; border:2px dashed var(--text-secondary); background:transparent; overflow:hidden; flex-shrink:0;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;"><path d="M12 2L2 22h20L12 2z"/><line x1="12" y1="9" x2="12" y2="13"/><circle cx="12" cy="17" r="0.5" fill="currentColor"/></svg>
+                <input type="color" id="createComplexModalColorPicker" value="#ff0000" style="opacity:0; position:absolute; width:1px; height:1px;">
+              </label>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span id="createComplexModalColorPreview" style="display:inline-block; width:22px; height:22px; border-radius:50%; background:#ff0000; border:2px solid rgba(255,255,255,0.25); flex-shrink:0;"></span>
+              <input type="text" id="createComplexModalColorHex" value="#ff0000" maxlength="7" placeholder="#rrggbb" style="height:36px; padding:0 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg-dark); color:var(--text-primary); font-family:monospace; font-size:0.9rem; flex:1; outline:none;">
+            </div>
+          </div>
+        </div>
+
+        <footer style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--border); padding-top: 20px; margin-top: 10px;">
+          <button id="btnCancelCreateComplexModal2" class="btn btn-secondary" style="padding: 0 20px; height: 40px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-primary); font-weight: 600; cursor: pointer;">Cancelar</button>
+          <button id="btnSubmitCreateComplexModal" class="btn btn-primary" style="padding: 0 24px; height: 40px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; background: var(--accent); color: white;">Criar Complexo</button>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Modal para Criar Nova Comunidade -->
+    <div id="createCommunityModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; justify-content: center; align-items: center;">
+      <div class="modal-content" style="background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 16px; padding: 30px; width: 520px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); position: relative;">
+        <header class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 16px;">
+          <h2 style="font-size: 1.35rem; font-weight: 700; color: var(--text-primary); margin: 0; letter-spacing: -0.02em;">Criar Nova Comunidade</h2>
+          <button id="btnCancelCreateCommunityModal" class="btn-close-modal" style="background: none; border: none; color: var(--text-secondary); font-size: 1.8rem; cursor: pointer; padding: 0; line-height: 1;">&times;</button>
+        </header>
+        
+        <div style="display: flex; flex-direction: column; gap: 18px; margin-top: 5px;">
+          <!-- Nome da Comunidade -->
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <label style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Nome da Comunidade</label>
+            <input type="text" id="createCommunityModalName" style="height: 42px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-dark); color: var(--text-primary); font-family: inherit; font-size: 0.95rem; outline: none;" placeholder="Digite o nome da comunidade...">
+          </div>
+
+          <!-- Bairro de Referência -->
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <label style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Bairro de Referência</label>
+            <input type="text" id="createCommunityModalNeighborhood" style="height: 42px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-dark); color: var(--text-primary); font-family: inherit; font-size: 0.95rem; outline: none;" value="Duque de Caxias">
+          </div>
+
+          <!-- Complexo -->
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <label style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Complexo</label>
+            <select id="createCommunityModalComplex" style="height: 42px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-dark); color: var(--text-primary); font-family: inherit; font-size: 0.95rem; outline: none;">
+              <!-- Populated dynamically via JS -->
+            </select>
+          </div>
+
+          <!-- Criar Novo Complexo Inline (se selecionar __NEW__) -->
+          <div id="createCommunityModalNewComplexGroup" style="display: none; flex-direction: column; gap: 14px; border-left: 2px solid var(--accent); padding-left: 14px; margin-top: 5px;">
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <label style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Nome do Novo Complexo</label>
+              <input type="text" id="createCommunityModalNewComplexName" style="height: 42px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-dark); color: var(--text-primary); font-family: inherit; font-size: 0.95rem; outline: none;" placeholder="Nome do complexo...">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <label style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Cor Padrão do Novo Complexo</label>
+              <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+                <span class="color-swatch" data-target="comNewComplexColorHex" style="background:#ff0000;" title="Vermelho"></span>
+                <span class="color-swatch" data-target="comNewComplexColorHex" style="background:#ff8c00;" title="Laranja"></span>
+                <span class="color-swatch" data-target="comNewComplexColorHex" style="background:#ffcc00;" title="Amarelo"></span>
+                <span class="color-swatch" data-target="comNewComplexColorHex" style="background:#00aa00;" title="Verde"></span>
+                <span class="color-swatch" data-target="comNewComplexColorHex" style="background:#00cc99;" title="Verde-Água"></span>
+                <span class="color-swatch" data-target="comNewComplexColorHex" style="background:#0077ff;" title="Azul"></span>
+                <span class="color-swatch" data-target="comNewComplexColorHex" style="background:#00007f;" title="Azul Escuro"></span>
+                <span class="color-swatch" data-target="comNewComplexColorHex" style="background:#aa00ff;" title="Púrpura"></span>
+                <span class="color-swatch" data-target="comNewComplexColorHex" style="background:#ff5500;" title="Laranja Escuro"></span>
+                <span class="color-swatch" data-target="comNewComplexColorHex" style="background:#aa007f;" title="Magenta"></span>
+                <span class="color-swatch" data-target="comNewComplexColorHex" style="background:#aa0000;" title="Vermelho Escuro"></span>
+                <span class="color-swatch" data-target="comNewComplexColorHex" style="background:#cccccc;" title="Cinza"></span>
+                <label title="Cor personalizada" style="cursor:pointer; display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; border:2px dashed var(--text-secondary); background:transparent; overflow:hidden; flex-shrink:0;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;"><path d="M12 2L2 22h20L12 2z"/><line x1="12" y1="9" x2="12" y2="13"/><circle cx="12" cy="17" r="0.5" fill="currentColor"/></svg>
+                  <input type="color" id="comNewComplexColorPicker" value="#ff0000" style="opacity:0; position:absolute; width:1px; height:1px;">
+                </label>
+              </div>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <span id="comNewComplexColorPreview" style="display:inline-block; width:22px; height:22px; border-radius:50%; background:#ff0000; border:2px solid rgba(255,255,255,0.25); flex-shrink:0;"></span>
+                <input type="text" id="comNewComplexColorHex" value="#ff0000" maxlength="7" placeholder="#rrggbb" style="height:36px; padding:0 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg-dark); color:var(--text-primary); font-family:monospace; font-size:0.9rem; flex:1; outline:none;">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <footer style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--border); padding-top: 20px; margin-top: 10px;">
+          <button id="btnCancelCreateCommunityModal2" class="btn btn-secondary" style="padding: 0 20px; height: 40px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-primary); font-weight: 600; cursor: pointer;">Cancelar</button>
+          <button id="btnSubmitCreateCommunityModal" class="btn btn-primary" style="padding: 0 24px; height: 40px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; background: var(--accent); color: white;">Criar Comunidade</button>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Modal Reutilizável de Confirmação (Substituto do confirm nativo) -->
+    <div id="customConfirmModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 11000; justify-content: center; align-items: center;">
+      <div class="modal-content" style="background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 16px; padding: 25px; width: 440px; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); position: relative;">
+        <header class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+          <h2 id="customConfirmTitle" style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary); margin: 0;">Confirmação</h2>
+          <button id="btnCancelConfirmModalX" class="btn-close-modal" style="background: none; border: none; color: var(--text-secondary); font-size: 1.8rem; cursor: pointer; padding: 0; line-height: 1;">&times;</button>
+        </header>
+        <div>
+          <p id="customConfirmMessage" style="font-size: 0.95rem; color: var(--text-secondary); margin: 0; line-height: 1.5;"></p>
+        </div>
+        <footer style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border); padding-top: 15px;">
+          <button id="btnCancelConfirmModal" class="btn btn-secondary" style="padding: 0 20px; height: 38px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-primary); font-weight: 600; cursor: pointer;">Cancelar</button>
+          <button id="btnConfirmConfirmModal" class="btn btn-danger" style="padding: 0 20px; height: 38px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; background: var(--danger); color: white;">Confirmar</button>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Modal Reutilizável de Input (Substituto do prompt nativo) -->
+    <div id="customPromptModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 11000; justify-content: center; align-items: center;">
+      <div class="modal-content" style="background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 16px; padding: 25px; width: 440px; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); position: relative;">
+        <header class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+          <h2 id="customPromptTitle" style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary); margin: 0;">Novo Item</h2>
+          <button id="btnCancelPromptModal" class="btn-close-modal" style="background: none; border: none; color: var(--text-secondary); font-size: 1.8rem; cursor: pointer; padding: 0; line-height: 1;">&times;</button>
+        </header>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <label id="customPromptLabel" style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Nome</label>
+          <input type="text" id="customPromptInput" style="height: 42px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-dark); color: var(--text-primary); font-family: inherit; font-size: 0.95rem; outline: none;">
+        </div>
+        <footer style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border); padding-top: 15px;">
+          <button id="btnConfirmPromptModal" class="btn btn-primary" style="padding: 0 20px; height: 38px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; background: var(--accent); color: white;">Confirmar</button>
+        </footer>
+      </div>
+    </div>
+  </div>
   </div>
 
   <!-- Leaflet JS (local) -->

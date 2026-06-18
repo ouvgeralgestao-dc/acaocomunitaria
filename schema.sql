@@ -1,6 +1,7 @@
 -- ============================================================
--- ASA v3 — Schema MySQL com Suporte Espacial
+-- SIMAC — Schema MySQL Refatorado com Suporte Espacial Otimizado
 -- Engine: InnoDB | Charset: utf8mb4 | Spatial: SRID 4326
+-- Nível de Acesso: Simplificado (Perfil Único de Administrador)
 -- ============================================================
 
 CREATE DATABASE IF NOT EXISTS simac
@@ -10,14 +11,34 @@ CREATE DATABASE IF NOT EXISTS simac
 USE simac;
 
 -- ------------------------------------------------------------
+-- TABELA: usuarios
+-- Armazena os usuários do sistema com nível único de acesso (Administrador)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS usuarios (
+  id            INT UNSIGNED     NOT NULL AUTO_INCREMENT,
+  nome          VARCHAR(100)     NOT NULL,
+  usuario       VARCHAR(50)      NOT NULL,
+  senha_hash    VARCHAR(255)     NOT NULL,
+  ativo         TINYINT(1)       NOT NULL DEFAULT 1,
+  criado_em     TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_usuario_login (usuario),
+  KEY idx_usuario_ativo (ativo)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
 -- TABELA PRINCIPAL: comunidades
--- Armazena o polígono territorial de cada comunidade
+-- Armazena o polígono territorial de cada comunidade e seu respectivo complexo/cor
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS comunidades (
   id            INT UNSIGNED     NOT NULL,
   nome          VARCHAR(255)     NOT NULL,
   total_ruas    SMALLINT         NOT NULL DEFAULT 0,
   geometria     GEOMETRY         NOT NULL SRID 4326,
+  complexo      VARCHAR(100)         NULL, -- Identificação do complexo da comunidade
+  cor_hex       VARCHAR(7)           NULL, -- Cor hexadecimal associada ao complexo (#RRGGBB)
   criado_em     TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
   atualizado_em TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
@@ -40,6 +61,7 @@ CREATE TABLE IF NOT EXISTS comunidade_ruas (
   PRIMARY KEY (id),
   KEY idx_rua_comunidade (comunidade_id),
   KEY idx_rua_nome (nome_rua),
+  UNIQUE KEY uq_comunidade_rua (comunidade_id, nome_rua), -- Impedir ruas duplicadas na mesma comunidade
 
   CONSTRAINT fk_rua_comunidade
     FOREIGN KEY (comunidade_id)
@@ -50,12 +72,12 @@ CREATE TABLE IF NOT EXISTS comunidade_ruas (
 
 -- ------------------------------------------------------------
 -- TABELA: comunidade_ceps
--- CEPs vinculados a cada comunidade, com dados oficiais dos Correios
+-- CEPs vinculados a cada comunidade
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS comunidade_ceps (
   id              INT UNSIGNED     NOT NULL AUTO_INCREMENT,
   comunidade_id   INT UNSIGNED     NOT NULL,
-  cep             CHAR(9)          NOT NULL,          -- formato: 99999-999
+  cep             CHAR(9)          NOT NULL, -- Formato: 99999-999
   logradouro      VARCHAR(255)         NULL,
   bairro          VARCHAR(255)         NULL,
   localidade      VARCHAR(255)         NULL,
@@ -75,40 +97,49 @@ CREATE TABLE IF NOT EXISTS comunidade_ceps (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
--- TABELA: usuarios
--- Controle de acesso ao sistema (RBAC)
--- senha_hash: bcrypt rounds=10
+-- TABELA: comunidade_historico_geometria
+-- Versionamento de geometrias para auditoria e rollback rápido
 -- ------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS usuarios (
-  id            INT UNSIGNED     NOT NULL AUTO_INCREMENT,
-  nome          VARCHAR(100)     NOT NULL,
-  usuario       VARCHAR(50)      NOT NULL,
-  senha_hash    VARCHAR(255)     NOT NULL,
-  perfil        ENUM('admin','operador','visualizador') NOT NULL DEFAULT 'visualizador',
-  ativo         TINYINT(1)       NOT NULL DEFAULT 1,
-  criado_em     TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  atualizado_em TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+CREATE TABLE IF NOT EXISTS comunidade_historico_geometria (
+  id             INT UNSIGNED     NOT NULL AUTO_INCREMENT,
+  comunidade_id  INT UNSIGNED     NOT NULL,
+  geometria      GEOMETRY         NOT NULL SRID 4326,
+  usuario_id     INT UNSIGNED         NULL,
+  criado_em      TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
   PRIMARY KEY (id),
-  UNIQUE KEY uq_usuario_login (usuario),
-  KEY idx_usuario_perfil (perfil),
-  KEY idx_usuario_ativo (ativo)
+  SPATIAL INDEX sp_historico_geometria (geometria),
+
+  CONSTRAINT fk_hist_comunidade
+    FOREIGN KEY (comunidade_id)
+    REFERENCES comunidades (id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_hist_usuario
+    FOREIGN KEY (usuario_id)
+    REFERENCES usuarios (id)
+    ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
 -- TABELA: audit_log
--- Rastreamento de todas as alterações territoriais
+-- Histórico de alterações administrativas leve
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS audit_log (
   id            BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT,
-  entidade      VARCHAR(50)      NOT NULL,   -- ex: 'comunidade'
+  entidade      VARCHAR(50)      NOT NULL,
   entidade_id   INT UNSIGNED     NOT NULL,
   acao          ENUM('INSERT','UPDATE','DELETE') NOT NULL,
-  payload       JSON                 NULL,
+  usuario_id    INT UNSIGNED         NULL,
+  payload       JSON                 NULL, -- Dados leves de antes/depois
   ip_origem     VARCHAR(45)          NULL,
   criado_em     TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
   PRIMARY KEY (id),
   KEY idx_audit_entidade (entidade, entidade_id),
-  KEY idx_audit_data (criado_em)
+  KEY idx_audit_data (criado_em),
+
+  CONSTRAINT fk_audit_usuario
+    FOREIGN KEY (usuario_id)
+    REFERENCES usuarios (id)
+    ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

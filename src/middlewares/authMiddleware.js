@@ -1,10 +1,10 @@
 const jwt = require('jsonwebtoken');
 const logger = require('../utils/logger');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'simac_jwt_secret_2026';
+const JWT_SECRET = process.env.JWT_SECRET || 'simac_jwt_super_secret_2026_change_me';
 
 /**
- * Middleware de autenticação JWT.
+ * Middleware de autenticação JWT para acesso administrativo.
  * Verifica o token no header Authorization ou no cookie de sessão.
  */
 function authMiddleware(req, res, next) {

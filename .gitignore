@@ -1,7 +1,8 @@
 node_modules/
-.DS_Store
-*.bak
-*.log
-ASA_V3_Offline.html
-Acoes_Comunitarias_Offline.html
 .env
+.env.*
+!.env.example
+dist/
+build/
+*.log
+.DS_Store

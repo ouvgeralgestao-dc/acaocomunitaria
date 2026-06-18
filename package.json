@@ -1,11 +1,10 @@
 {
-  "name": "simac",
-  "version": "1.0.0",
-  "description": "SIMAC - Sistema de Inteligência e Monitoramento de Ação Comunitária",
+  "name": "simac-evolved",
+  "version": "2.0.0",
+  "description": "SIMAC - Sistema de Inteligência e Monitoramento de Ação Comunitária (Evoluído)",
   "main": "index.html",
   "scripts": {
     "start": "node server.js",
-    "build": "node scripts/consolidate_db.js",
     "iniciar": "node iniciar.js"
   },
   "keywords": [],
@@ -19,7 +18,9 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.2",
+    "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.3",
-    "mysql2": "^3.22.3"
+    "mysql2": "^3.22.3",
+    "zod": "^3.23.8"
   }
 }

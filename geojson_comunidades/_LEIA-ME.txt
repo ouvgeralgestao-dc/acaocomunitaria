@@ -1,0 +1,10 @@
+GeoJSONs gerados a partir do KMZ GRANDES COMPLEXOS - APRESENTAÇÃO.kmz
+Critério: foram extraídos apenas os polígonos diretos dentro de cada pasta de comunidade.
+As subpastas de SETORES CENSITÁRIOS foram ignoradas.
+
+Cores: os estilos do KML foram convertidos para propriedades comuns em GeoJSON:
+fill, fill-opacity, stroke, stroke-opacity e stroke-width.
+Também foram preservados os valores originais kml_fill_color e kml_stroke_color quando existiam.
+
+Total de GeoJSONs individuais de comunidades: 66
+Total de complexos encontrados: 10

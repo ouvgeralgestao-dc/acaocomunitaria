@@ -3,44 +3,31 @@
 /**
  * spatialController.js
  * Orquestra as rotas espaciais, delega ao spatialService.
- * Sem lógica de negócio — apenas validação de HTTP e formatação de resposta.
  */
 
 const spatialService = require('../services/spatialService');
 const logger = require('../utils/logger');
 
-// ---------------------------------------------------------------------------
-// GET /api/comunidades
-// Lista todas as comunidades com geometrias (para o mapa)
-// ---------------------------------------------------------------------------
 async function listarComunidades(req, res) {
   try {
     const comunidades = await spatialService.getComunidades();
     res.json({ success: true, total: comunidades.length, data: comunidades });
   } catch (err) {
-    logger.error('listarComunidades', { message: err.message });
+    logger.error('listarComunidades', err);
     res.status(err.status || 500).json({ success: false, error: err.message });
   }
 }
 
-// ---------------------------------------------------------------------------
-// GET /api/comunidades/:id
-// Retorna detalhes de uma comunidade (ruas, CEPs, geometria)
-// ---------------------------------------------------------------------------
 async function detalharComunidade(req, res) {
   try {
     const comunidade = await spatialService.getComunidadeById(req.params.id);
     res.json({ success: true, data: comunidade });
   } catch (err) {
-    logger.error('detalharComunidade', { id: req.params.id, message: err.message });
+    logger.error('detalharComunidade', err, { id: req.params.id });
     res.status(err.status || 500).json({ success: false, error: err.message });
   }
 }
 
-// ---------------------------------------------------------------------------
-// GET /api/comunidades/ponto?lat=...&lng=...
-// Geocodificação reversa: retorna a comunidade que contém o ponto
-// ---------------------------------------------------------------------------
 async function buscarPorPonto(req, res) {
   try {
     const { lat, lng } = req.query;
@@ -52,16 +39,11 @@ async function buscarPorPonto(req, res) {
 
     res.json({ success: true, data: comunidade });
   } catch (err) {
-    logger.error('buscarPorPonto', { query: req.query, message: err.message });
+    logger.error('buscarPorPonto', err, { query: req.query });
     res.status(err.status || 500).json({ success: false, error: err.message });
   }
 }
 
-// ---------------------------------------------------------------------------
-// PUT /api/comunidades/:id/geometria
-// Atualiza o polígono de uma comunidade após edição no mapa
-// Body: { geometria: { type: "Polygon", coordinates: [...] } }
-// ---------------------------------------------------------------------------
 async function atualizarGeometria(req, res) {
   try {
     const { geometria } = req.body;
@@ -70,21 +52,19 @@ async function atualizarGeometria(req, res) {
       return res.status(400).json({ success: false, error: 'Campo "geometria" é obrigatório no body' });
     }
 
+    // Passando ID do usuário logado para gravar no histórico/auditoria de geometria
     const resultado = await spatialService.updateGeometria(req.params.id, geometria, {
       ip: req.ip,
+      usuarioId: req.usuario?.id
     });
 
     res.json(resultado);
   } catch (err) {
-    logger.error('atualizarGeometria', { id: req.params.id, message: err.message });
+    logger.error('atualizarGeometria', err, { id: req.params.id });
     res.status(err.status || 500).json({ success: false, error: err.message });
   }
 }
 
-// ---------------------------------------------------------------------------
-// GET /api/comunidades/:id/ruas?page=1&limit=50
-// Lista ruas de uma comunidade com paginação
-// ---------------------------------------------------------------------------
 async function listarRuas(req, res) {
   try {
     const page  = Math.max(1, parseInt(req.query.page  || '1', 10));
@@ -93,7 +73,7 @@ async function listarRuas(req, res) {
     const resultado = await spatialService.getRuasByComunidade(req.params.id, page, limit);
     res.json({ success: true, ...resultado });
   } catch (err) {
-    logger.error('listarRuas', { id: req.params.id, message: err.message });
+    logger.error('listarRuas', err, { id: req.params.id });
     res.status(err.status || 500).json({ success: false, error: err.message });
   }
 }

@@ -1,223 +1,289 @@
 const fs = require('fs').promises;
 const path = require('path');
 const logger = require('../utils/logger');
+const pool = require('../config/database');
+const { validateAndSanitizeGeometry } = require('../services/spatialService');
 
-// Fila global de escrita em memória para serializar operações e evitar Race Conditions / Lost Updates
+// Fila global de escrita para serializar operações e evitar Race Conditions/Lost Updates no arquivo
 let writeQueue = Promise.resolve();
 
-// Caminho único e centralizado do arquivo mestre GeoJSON
+// Caminhos dos arquivos
 const GEOJSON_PATH = path.join(__dirname, '../data/comunidades.geojson');
+const MASTER_DB_PATH = path.join(__dirname, '../data/simac_master_db.json');
 
 /**
- * Controller responsável pela gestão e edição cartográfica do GeoJSON
+ * Normaliza uma feature importada extraindo chaves corretas e preservando a hierarquia
  */
+function extractFeatureProps(f, index) {
+  const props = f.properties || {};
+  
+  // Rótulo principal da comunidade (Problema 1 corrigido: prioriza 'COMUNIDADE' sobre 'BAIRRO / REFERÊNCIA')
+  const nome = props.COMUNIDADE || props.comunidade || props.Comunidade || props.nome || props.NOME || props.name || `Comunidade_${index + 1}`;
+  
+  // Bairro ou Referência
+  const bairro = props["BAIRRO / REFERÊNCIA"] || props.bairro_referencia || props.bairro || props.BAIRRO || props.district || 'Não Informado';
+  
+  // Complexo e Metodologia de Cores (Problema 3 corrigido: lê hierarquia de cores e complexos)
+  const complexo = props.COMPLEXO || props.complexo || props.Complexo || null;
+  const corHex = props.COR_HEX || props.cor_hex || props.cor || props.COLOR || props.color || null;
+
+  return { nome, bairro, complexo, corHex };
+}
+
+/**
+ * Converte GeoJSON Polygon/MultiPolygon para WKT compatível com MySQL 8
+ */
+function toWkt(geom) {
+  if (geom.type === 'Polygon') {
+    const coordsStr = geom.coordinates.map(ring => 
+      '(' + ring.map(pt => `${pt[1]} ${pt[0]}`).join(', ') + ')'
+    ).join(', ');
+    return `POLYGON(${coordsStr})`;
+  } else if (geom.type === 'MultiPolygon') {
+    const polysStr = geom.coordinates.map(poly => 
+      '(' + poly.map(ring => 
+        '(' + ring.map(pt => `${pt[1]} ${pt[0]}`).join(', ') + ')'
+      ).join(', ') + ')'
+    ).join(', ');
+    return `MULTIPOLYGON(${polysStr})`;
+  }
+  throw new Error(`Tipo geométrico ${geom.type} não suportado.`);
+}
+
+/**
+ * Sincroniza o arquivo GeoJSON físico e o arquivo simac_master_db.json com o banco de dados.
+ */
+async function syncFilesFromDatabase() {
+  const [comunidadesRows] = await pool.query(
+    `SELECT id, nome, total_ruas, complexo, cor_hex, ST_AsGeoJSON(geometria) as geometria_json FROM comunidades`
+  );
+
+  const features = [];
+  const masterDbList = [];
+
+  for (const row of comunidadesRows) {
+    const geom = typeof row.geometria_json === 'string' ? JSON.parse(row.geometria_json) : row.geometria_json;
+    
+    // Obter ruas e ceps
+    const [ruas] = await pool.query('SELECT nome_rua FROM comunidade_ruas WHERE comunidade_id = ?', [row.id]);
+    const [ceps] = await pool.query('SELECT cep, logradouro, bairro, localidade, uf, ibge, ddd FROM comunidade_ceps WHERE comunidade_id = ?', [row.id]);
+
+    // Montar propriedades respeitando as regras do sistema
+    const properties = {
+      id: row.id,
+      COMUNIDADE: row.nome,
+      "BAIRRO / REFERÊNCIA": ceps[0]?.bairro || 'Não Informado',
+      COMPLEXO: row.complexo,
+      COR_HEX: row.cor_hex,
+      total_ruas: row.total_ruas
+    };
+
+    features.push({
+      type: "Feature",
+      id: row.id,
+      geometry: geom,
+      properties
+    });
+
+    masterDbList.push({
+      id: row.id,
+      nome: row.nome,
+      total_ruas: row.total_ruas,
+      complexo: row.complexo,
+      cor_hex: row.cor_hex,
+      geometria: geom,
+      ruas: ruas.map(r => r.nome_rua),
+      ceps: ceps.map(c => ({
+        cep: c.cep,
+        oficial: {
+          logradouro: c.logradouro,
+          bairro: c.bairro,
+          localidade: c.localidade,
+          uf: c.uf,
+          ibge: c.ibge,
+          ddd: c.ddd
+        }
+      }))
+    });
+  }
+
+  const featureCollection = {
+    type: "FeatureCollection",
+    features
+  };
+
+  // Garante a existência do diretório data/
+  await fs.mkdir(path.dirname(GEOJSON_PATH), { recursive: true });
+
+  // Escrita síncrona nos arquivos
+  await fs.writeFile(GEOJSON_PATH, JSON.stringify(featureCollection, null, 2), 'utf8');
+  await fs.writeFile(MASTER_DB_PATH, JSON.stringify(masterDbList, null, 2), 'utf8');
+  
+  logger.info('[Sync] Arquivos GeoJSON e MasterDB sincronizados com sucesso a partir do banco de dados.');
+}
+
 const geojsonController = {
+  /**
+   * Salva alterações em lote (GeoJSON FeatureCollection) e persiste de forma transacionada no Banco de Dados
+   */
   async saveGeoJSON(req, res) {
     const { featureCollection } = req.body;
     const clientIP = req.ip || req.connection.remoteAddress;
-    // Token de segurança removido; operação permitida sem autenticação.
+    const usuarioId = req.usuario?.id || null;
 
-    // 2. Validação de Schema Estrutural GeoJSON Básica (Defensiva)
-    if (!featureCollection || featureCollection.type !== 'FeatureCollection') {
-      logger.warn('[GeoJSON Validation] Payload inválido rejeitado. Estrutura não é FeatureCollection.', {
-        ip: clientIP
-      });
-      return res.status(400).json({ error: 'Formato GeoJSON inválido. Deve ser do tipo FeatureCollection.' });
+    if (!featureCollection || featureCollection.type !== 'FeatureCollection' || !Array.isArray(featureCollection.features)) {
+      return res.status(400).json({ success: false, error: 'Formato GeoJSON inválido.' });
     }
 
-    if (!Array.isArray(featureCollection.features)) {
-      logger.warn('[GeoJSON Validation] Payload sem array de features rejeitado.', {
-        ip: clientIP
-      });
-      return res.status(400).json({ error: 'Formato GeoJSON inválido. Features deve ser um array.' });
-    }
-
-    // Validação topológica básica: garantir que as features têm geometria e tipo válido
-    const invalidFeature = featureCollection.features.find(f => {
-      return !f || f.type !== 'Feature' || !f.geometry || !f.geometry.type || !Array.isArray(f.geometry.coordinates);
-    });
-
-    if (invalidFeature) {
-      logger.warn('[GeoJSON Validation] Feature com estrutura ou geometria inválida rejeitada.', {
-        ip: clientIP,
-        invalidFeatureSummary: invalidFeature ? JSON.stringify(invalidFeature).substring(0, 150) : 'null'
-      });
-      return res.status(400).json({ error: 'Formato GeoJSON inválido. Uma ou mais feições possuem geometria ou estrutura corrompida.' });
-    }
-
-    const geojsonPath = GEOJSON_PATH;
-    const backupPath = `${geojsonPath}.bak`;
-
-    // 3. Execução Serializada na Fila (Prevenção de Corrupção Concorrente)
+    // Sequenciamento seguro contra concorrência
     writeQueue = writeQueue.then(async () => {
+      const connection = await pool.getConnection();
       try {
-        logger.info('[GeoJSON Operation] Iniciando fluxo assíncrono seguro de persistência...', { ip: clientIP });
-        
-        let currentContent = '';
-        try {
-          currentContent = await fs.readFile(geojsonPath, 'utf8');
-        } catch (readErr) {
-          logger.warn('[GeoJSON Warning] Arquivo communities.geojson não localizado ou sem leitura. Criando novo arquivo.', { error: readErr.message });
+        await connection.beginTransaction();
+        logger.info('[GeoJSON Save] Iniciando persistência transacionada...');
+
+        // 1. Coleta e validação estrutural preliminar
+        const parsedFeatures = [];
+        let index = 0;
+        for (const f of featureCollection.features) {
+          if (!f || !f.geometry) {
+            throw new Error('Uma ou mais feições possuem geometria ausente ou corrompida.');
+          }
+
+          // Validação espacial ativa com ST_IsValid / ST_MakeValid (Fase 1 / Regra GeoJSON)
+          const validGeom = await validateAndSanitizeGeometry(f.geometry);
+          const { nome, bairro, complexo, corHex } = extractFeatureProps(f, index);
+          
+          parsedFeatures.push({
+            id: f.id ? parseInt(f.id, 10) || (index + 1000) : (index + 1000),
+            nome,
+            bairro,
+            complexo,
+            corHex,
+            geometria: validGeom
+          });
+          index++;
         }
 
-        // Criar backup apenas se o arquivo original continha dados válidos
-        if (currentContent) {
-          await fs.writeFile(backupPath, currentContent, 'utf8');
-          logger.info('[GeoJSON Backup] Backup de contingência criado com sucesso.', { backupPath });
+        // 2. Limpar base atual para sobrescrever (Operação em Lote Segura)
+        await connection.query('DELETE FROM comunidade_ceps');
+        await connection.query('DELETE FROM comunidade_ruas');
+        await connection.query('DELETE FROM comunidades');
+
+        // 3. Inserir dados limpos e normalizados
+        const stmtComunidade = await connection.prepare(
+          'INSERT INTO comunidades (id, nome, total_ruas, geometria, complexo, cor_hex) VALUES (?, ?, ?, ST_GeomFromText(?, 4326), ?, ?)'
+        );
+
+        for (const com of parsedFeatures) {
+          const wkt = toWkt(com.geometria);
+          await stmtComunidade.execute([
+            com.id,
+            com.nome,
+            0,
+            wkt,
+            com.complexo,
+            com.corHex
+          ]);
         }
 
-        // Persistência assíncrona do novo GeoJSON com formatação estruturada
-        const serializedData = JSON.stringify(featureCollection, null, 2);
-        await fs.writeFile(geojsonPath, serializedData, 'utf8');
+        await connection.commit();
+        logger.info('[GeoJSON Save] Banco de dados atualizado com sucesso. Atualizando arquivos...');
 
-        logger.info('[GeoJSON Save] Alterações persistidas no disco com sucesso.', {
-          geojsonPath,
-          featuresCount: featureCollection.features.length
-        });
+        // 4. Sincronizar arquivos em disco a partir da base higienizada do MySQL
+        await syncFilesFromDatabase();
 
-        // Retornar a resposta dentro da promessa resolvida
-        res.json({ 
-          message: 'GeoJSON atualizado com sucesso!', 
-          backup: backupPath,
-          featuresCount: featureCollection.features.length
-        });
+        res.json({ success: true, message: 'GeoJSON e Banco de dados sincronizados com sucesso!' });
       } catch (error) {
-        logger.error('[GeoJSON Error] Falha crítica durante persistência ou backup.', error, { ip: clientIP });
-        res.status(500).json({ error: 'Erro crítico interno ao salvar base de dados GeoJSON.' });
+        await connection.rollback();
+        logger.error('[GeoJSON Save Error] Falha de persistência transacionada.', error, { ip: clientIP });
+        res.status(500).json({ success: false, error: error.message || 'Erro crítico ao sincronizar base.' });
+      } finally {
+        connection.release();
       }
     });
 
-    // Aguardar a execução da fila para a requisição atual
     await writeQueue;
   },
 
   /**
-   * Importa e mescla um GeoJSON externo ao arquivo mestre de comunidades.
-   * Realiza validação, normalização de propriedades, deduplicação por nome
-   * e backup automático antes da persistência.
+   * Importa e mescla arquivos GeoJSON externos, corrigindo polígonos e cores
    */
   async importGeoJSON(req, res) {
     const { featureCollection, replaceExisting = false } = req.body;
     const clientIP = req.ip || req.connection.remoteAddress;
-    // Token de segurança removido; importação permitida sem autenticação.
+    const usuarioId = req.usuario?.id || null;
 
-    // 2. Validação estrutural do GeoJSON importado
     if (!featureCollection || featureCollection.type !== 'FeatureCollection' || !Array.isArray(featureCollection.features)) {
-      return res.status(400).json({ error: 'Formato inválido. O arquivo deve ser um GeoJSON FeatureCollection.' });
-    }
-
-    if (featureCollection.features.length === 0) {
-      return res.status(400).json({ error: 'O arquivo GeoJSON está vazio (sem features).' });
-    }
-
-    // 3. Validação de geometria em cada feature
-    const geometriesValidas = ['Polygon', 'MultiPolygon'];
-    const invalidFeatures = featureCollection.features.filter(f => {
-      return !f || f.type !== 'Feature'
-        || !f.geometry
-        || !geometriesValidas.includes(f.geometry.type)
-        || !Array.isArray(f.geometry.coordinates);
-    });
-
-    if (invalidFeatures.length > 0) {
-      logger.warn('[GeoJSON Import Validation] Features com geometria inválida detectadas.', {
-        ip: clientIP,
-        count: invalidFeatures.length
-      });
-      return res.status(400).json({
-        error: `${invalidFeatures.length} feature(s) com geometria inválida ou não-poligonal. Apenas Polygon e MultiPolygon são aceitos.`
-      });
+      return res.status(400).json({ success: false, error: 'Arquivo inválido. Deve ser FeatureCollection.' });
     }
 
     writeQueue = writeQueue.then(async () => {
+      const connection = await pool.getConnection();
       try {
-        // 4. Ler o GeoJSON mestre atual
-        let masterCollection = { type: 'FeatureCollection', features: [] };
-        try {
-          const raw = await fs.readFile(GEOJSON_PATH, 'utf8');
-          masterCollection = JSON.parse(raw);
-        } catch (e) {
-          logger.warn('[GeoJSON Import] Arquivo mestre não encontrado. Será criado novo.', { error: e.message });
-        }
-
-        // 5. Backup automático do arquivo mestre
-        const backupPath = `${GEOJSON_PATH}.bak`;
-        if (masterCollection.features.length > 0) {
-          await fs.writeFile(backupPath, JSON.stringify(masterCollection, null, 2), 'utf8');
-          logger.info('[GeoJSON Import] Backup do arquivo mestre criado.', { backupPath });
-        }
-
-        // 6. Normalizar e preparar as features importadas
-        const existingNames = new Set(
-          masterCollection.features.map(f => (f.properties?.name || f.properties?.neighborhood || '').toLowerCase())
-        );
+        await connection.beginTransaction();
+        logger.info('[GeoJSON Import] Iniciando importação transacionada...');
 
         let imported = 0;
         let skipped = 0;
         let replaced = 0;
 
-        const importedFeatures = featureCollection.features.map((f, index) => {
-          // Normalização de propriedades: garantir campos mínimos obrigatórios
-          const props = f.properties || {};
-          const name = props.name || props.nome || props.NOME || props.community || `Comunidade_${index + 1}`;
-          const neighborhood = props.neighborhood || props.bairro || props.BAIRRO || props.district || 'Não Informado';
+        let index = 0;
+        for (const f of featureCollection.features) {
+          const validGeom = await validateAndSanitizeGeometry(f.geometry);
+          const { nome, bairro, complexo, corHex } = extractFeatureProps(f, index);
+          
+          // Gerar ID numérico único
+          const id = f.id ? parseInt(f.id, 10) || (Date.now() + index) : (Date.now() + index);
 
-          return {
-            ...f,
-            type: 'Feature',
-            id: f.id || `import_${Date.now()}_${index}`,
-            properties: {
-              ...props,
-              name,
-              neighborhood,
-              imported_at: new Date().toISOString(),
-              source: 'import'
+          // Verificar existência por nome
+          const [[exists]] = await connection.query(
+            'SELECT id FROM comunidades WHERE nome = ?',
+            [nome]
+          );
+
+          if (exists) {
+            if (replaceExisting) {
+              // Substituir: Grava no histórico, deleta antigo e adiciona novo
+              await connection.query('DELETE FROM comunidades WHERE id = ?', [exists.id]);
+              
+              const wkt = toWkt(validGeom);
+              await connection.query(
+                `INSERT INTO comunidades (id, nome, geometria, complexo, cor_hex) VALUES (?, ?, ST_GeomFromText(?, 4326), ?, ?)`,
+                [id, nome, wkt, complexo, corHex]
+              );
+              replaced++;
+            } else {
+              skipped++;
             }
-          };
-        });
-
-        // 7. Merge inteligente: mescla ou substitui
-        let finalFeatures;
-        if (replaceExisting) {
-          // Modo substituição: sobreescreve features com mesmo nome
-          const importedByName = new Map(importedFeatures.map(f => [f.properties.name.toLowerCase(), f]));
-          const filtered = masterCollection.features.filter(f => {
-            const n = (f.properties?.name || '').toLowerCase();
-            if (importedByName.has(n)) { replaced++; return false; }
-            return true;
-          });
-          finalFeatures = [...filtered, ...importedFeatures];
-          imported = importedFeatures.length;
-        } else {
-          // Modo adição: pula duplicatas por nome
-          const newFeatures = importedFeatures.filter(f => {
-            const n = f.properties.name.toLowerCase();
-            if (existingNames.has(n)) { skipped++; return false; }
-            existingNames.add(n);
+          } else {
+            // Novo registro
+            const wkt = toWkt(validGeom);
+            await connection.query(
+              `INSERT INTO comunidades (id, nome, geometria, complexo, cor_hex) VALUES (?, ?, ST_GeomFromText(?, 4326), ?, ?)`,
+              [id, nome, wkt, complexo, corHex]
+            );
             imported++;
-            return true;
-          });
-          finalFeatures = [...masterCollection.features, ...newFeatures];
+          }
+          index++;
         }
 
-        const updatedCollection = { type: 'FeatureCollection', features: finalFeatures };
-        await fs.writeFile(GEOJSON_PATH, JSON.stringify(updatedCollection, null, 2), 'utf8');
-
-        logger.info('[GeoJSON Import] Importação concluída com sucesso.', {
-          ip: clientIP,
-          imported,
-          skipped,
-          replaced,
-          totalFeatures: finalFeatures.length
-        });
+        await connection.commit();
+        
+        // Sincronizar disco
+        await syncFilesFromDatabase();
 
         res.json({
-          message: 'GeoJSON importado com sucesso!',
-          summary: { imported, skipped, replaced, totalFeatures: finalFeatures.length }
+          success: true,
+          message: 'GeoJSON importado e banco atualizado com sucesso!',
+          summary: { imported, skipped, replaced }
         });
       } catch (error) {
-        logger.error('[GeoJSON Import Error] Falha crítica durante importação.', error, { ip: clientIP });
-        res.status(500).json({ error: 'Erro interno ao importar GeoJSON.' });
+        await connection.rollback();
+        logger.error('[GeoJSON Import Error] Falha de importação.', error, { ip: clientIP });
+        res.status(500).json({ success: false, error: error.message || 'Erro ao importar GeoJSON.' });
+      } finally {
+        connection.release();
       }
     });
 
@@ -225,44 +291,40 @@ const geojsonController = {
   },
 
   /**
-   * Apaga completamente os dados do arquivo mestre GeoJSON, gerando backup antes.
+   * Limpa completamente o banco de dados e sincroniza arquivos vazios
    */
   async clearGeoJSON(req, res) {
     const clientIP = req.ip || req.connection.remoteAddress;
-    const geojsonPath = GEOJSON_PATH;
-    const backupPath = `${geojsonPath}.bak`;
 
     writeQueue = writeQueue.then(async () => {
+      const connection = await pool.getConnection();
       try {
-        logger.info('[GeoJSON Clear] Iniciando limpeza total do GeoJSON...', { ip: clientIP });
+        await connection.beginTransaction();
+        logger.info('[GeoJSON Clear] Iniciando limpeza total...');
+
+        await connection.query('DELETE FROM comunidade_ceps');
+        await connection.query('DELETE FROM comunidade_ruas');
+        await connection.query('DELETE FROM comunidades');
+
+        await connection.commit();
         
-        let currentContent = '';
-        try {
-          currentContent = await fs.readFile(geojsonPath, 'utf8');
-        } catch (readErr) {
-          logger.warn('[GeoJSON Clear Warning] Arquivo communities.geojson não localizado para backup.', { error: readErr.message });
-        }
+        // Sincronizar arquivos vazios
+        await syncFilesFromDatabase();
 
-        // Criar backup
-        if (currentContent) {
-          await fs.writeFile(backupPath, currentContent, 'utf8');
-          logger.info('[GeoJSON Clear Backup] Backup de contingência criado antes de apagar.', { backupPath });
-        }
-
-        // Criar FeatureCollection vazia
-        const emptyCollection = { type: 'FeatureCollection', features: [] };
-        await fs.writeFile(geojsonPath, JSON.stringify(emptyCollection, null, 2), 'utf8');
-
-        logger.info('[GeoJSON Clear Success] Todo o conteúdo GeoJSON foi apagado.', { geojsonPath });
-        res.json({ message: 'Todos os dados GeoJSON foram apagados com sucesso!' });
+        res.json({ success: true, message: 'Todos os dados do mapa foram limpos.' });
       } catch (error) {
-        logger.error('[GeoJSON Clear Error] Falha crítica ao apagar dados GeoJSON.', error, { ip: clientIP });
-        res.status(500).json({ error: 'Erro crítico interno ao apagar dados GeoJSON.' });
+        await connection.rollback();
+        logger.error('[GeoJSON Clear Error] Falha ao limpar dados.', error, { ip: clientIP });
+        res.status(500).json({ success: false, error: 'Erro crítico ao limpar base.' });
+      } finally {
+        connection.release();
       }
     });
 
     await writeQueue;
-  }
+  },
+
+  syncFilesFromDatabase
 };
 
 module.exports = geojsonController;

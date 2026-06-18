@@ -1665,6 +1665,354 @@ tr.row-editing {
   transition: background-color 0.2s, box-shadow 0.2s;
 }
 
-.audit-table tbody tr:hover {
   box-shadow: inset 3px 0 0 0 var(--accent);
+}
+
+/* Agrupamento por Complexos */
+.complex-group {
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 8px;
+}
+
+.complex-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  background-color: rgba(255, 255, 255, 0.02);
+  border-radius: 6px;
+  user-select: none;
+  margin-bottom: 6px;
+}
+
+.complex-header:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.complex-toggle-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  margin-right: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.complex-toggle-btn.collapsed {
+  transform: rotate(-90deg);
+}
+
+.complex-title {
+  flex: 1;
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.complex-checkbox {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.complex-checkbox:checked {
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+
+.complex-checkbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.complex-checkbox.indeterminate {
+  background-color: transparent;
+  border-color: var(--accent);
+}
+
+.complex-checkbox.indeterminate::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 6px;
+  width: 8px;
+  height: 2px;
+  background-color: var(--accent);
+}
+
+.complex-sublist {
+  list-style: none;
+  padding-left: 12px;
+  transition: max-height 0.3s ease-out;
+  overflow: hidden;
+}
+
+.complex-sublist.collapsed {
+  display: none;
+}
+
+/* Botão Flutuante do Limite Municipal no Mapa */
+.btn-floating-boundary {
+  position: absolute;
+  top: 80px;
+  left: 20px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  transition: all 0.2s ease;
+}
+
+.btn-floating-boundary svg {
+  color: var(--text-secondary);
+  transition: color 0.2s ease;
+}
+
+.btn-floating-boundary:hover {
+  background: var(--glass-hover);
+  border-color: var(--accent);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.2);
+  transform: translateY(-1px);
+}
+
+.btn-floating-boundary.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.btn-floating-boundary.active svg {
+  color: white;
+}
+
+/* Toggle do Limite Municipal */
+.boundary-toggle-wrapper {
+  margin-top: 10px;
+  padding: 8px 10px;
+  background-color: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+}
+
+.boundary-toggle-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  width: 100%;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.boundary-toggle-checkbox {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.boundary-toggle-slider {
+  position: relative;
+  display: inline-block;
+  width: 32px;
+  height: 18px;
+  background-color: var(--border);
+  border-radius: 10px;
+  margin-right: 10px;
+  transition: background-color 0.2s;
+  flex-shrink: 0;
+}
+
+.boundary-toggle-slider::before {
+  content: "";
+  position: absolute;
+  height: 12px;
+  width: 12px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.boundary-toggle-checkbox:checked + .boundary-toggle-slider {
+  background-color: var(--accent);
+}
+
+.boundary-toggle-checkbox:checked + .boundary-toggle-slider::before {
+  transform: translateX(14px);
+}
+
+.boundary-toggle-text {
+  font-weight: 500;
+}
+
+/* Sub-abas de Gestão */
+.cleaner-tab-btn {
+  border-bottom: 3px solid transparent;
+}
+.cleaner-tab-btn.active {
+  color: var(--text-primary) !important;
+  border-bottom: 3px solid var(--accent) !important;
+}
+
+/* Tags de Associação de Comunidades */
+.assoc-tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.assoc-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: var(--text-primary);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+
+.assoc-tag .remove-assoc {
+  background: none;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  padding: 0;
+  font-weight: bold;
+  font-size: 0.95rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-add-assoc {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed var(--border);
+  color: var(--text-secondary);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-add-assoc:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+
+.select-add-assoc {
+  background: var(--bg-sidebar);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  padding: 4px 6px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-family: inherit;
+  outline: none;
+}
+
+/* Ações na Barra Lateral */
+.community-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  opacity: 0.3;
+  transition: opacity 0.2s;
+}
+
+.community-item:hover .community-item-actions {
+  opacity: 1;
+}
+
+.btn-action-sidebar {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-action-sidebar:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+.btn-action-sidebar.active-visible {
+  color: var(--accent);
+}
+
+.btn-action-sidebar.btn-delete-sidebar:hover {
+  color: var(--danger);
+  background: rgba(239, 68, 68, 0.12);
+}
+
+/* ============================================================
+   COLOR SWATCH — Seletor de Cor Híbrido (Paleta + Custom)
+   ============================================================ */
+
+.color-swatch {
+  display: inline-block;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid transparent;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.15);
+  flex-shrink: 0;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.color-swatch:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.4);
+}
+
+.color-swatch.selected {
+  border-color: white;
+  box-shadow: 0 0 0 2px var(--accent), 0 0 8px rgba(59,130,246,0.5);
+  transform: scale(1.1);
 }

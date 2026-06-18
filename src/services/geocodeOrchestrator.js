@@ -3,22 +3,12 @@ const googleGeocoder = require('./googleGeocoder');
 const cacheService = require('./cacheService');
 const addressParser = require('../utils/addressParser');
 
-/**
- * ASA v3 - Geocode Orchestrator
- * Gerencia a hierarquia de provedores com suporte a busca estruturada.
- */
 class GeocodeOrchestrator {
-  
-  /**
-   * Método de busca rápida para Autocomplete (Sugestões enquanto digita)
-   */
   async autocomplete(query, limit = 5) {
     const cacheKey = `auto_${query.toLowerCase().trim()}`;
     const cached = cacheService.get(cacheKey);
     if (cached) return cached;
 
-    // No autocomplete, priorizamos rapidez e nomes de logradouros
-    // Se o Google estiver ativo, usamos a Geocoding dele (ou Places futuramente)
     const results = await this.tryNominatim(query, limit, true);
     return this.finish(cacheKey, results || []);
   }
@@ -33,7 +23,6 @@ class GeocodeOrchestrator {
 
     let result = null;
 
-    // 1. Tentar Google Maps (Padrão Ouro)
     if (googleGeocoder.isEnabled) {
       result = await googleGeocoder.geocode(query);
       if (result && result.confidence >= 0.9) {
@@ -43,7 +32,6 @@ class GeocodeOrchestrator {
 
     const hasNumber = !!parsed.number;
 
-    // 2. Tentar ArcGIS (Excelente para números no Brasil)
     if (hasNumber) {
       const arcgisResult = await this.tryArcGIS(query);
       if (arcgisResult && arcgisResult.confidence >= 0.85) {
@@ -51,23 +39,20 @@ class GeocodeOrchestrator {
       }
     }
 
-    // 3. Fallback Nominatim (OSM) - Busca Estruturada
     let nominatimResults = [];
     try {
       console.log(`[Orchestrator] Tentando Nominatim Estruturado...`);
       nominatimResults = await this.tryNominatim(query, limit, false);
       
-      // FALLBACK: Se a busca estruturada falhar, tentamos a busca livre (q)
       if (!nominatimResults || nominatimResults.length === 0) {
         console.log(`[Orchestrator] Nominatim Estruturado falhou. Tentando Busca Livre...`);
-        nominatimResults = await this.tryNominatim(query, limit, true); // true = force freeform
+        nominatimResults = await this.tryNominatim(query, limit, true);
       }
     } catch (e) {
       console.error('[Orchestrator] Nominatim critical failure:', e.message);
     }
     
     if (nominatimResults && nominatimResults.length > 0) {
-      // Filtragem estrita para garantir que o resultado pertence à rua buscada
       if (parsed.street && parsed.street.length > 3) {
         const streetTerm = parsed.street.split(' ').pop().toLowerCase(); 
         const filtered = nominatimResults.filter(r => 
@@ -82,7 +67,6 @@ class GeocodeOrchestrator {
       return this.finish(cacheKey, uniqueResults.slice(0, limit));
     }
 
-    // 4. Fallback Final: Photon
     const photonResults = await this.tryPhoton(query, limit);
     return this.finish(cacheKey, photonResults || []);
   }
@@ -128,13 +112,12 @@ class GeocodeOrchestrator {
 
       const res = await axios.get('https://nominatim.openstreetmap.org/search', {
         params,
-        headers: { 'User-Agent': 'ASA-V3-System' },
+        headers: { 'User-Agent': 'SIMAC-Evolved' },
         timeout: 8000
       });
 
       return res.data
         .filter(item => {
-          // No autocomplete permitimos POIs, na busca final filtramos rigorosamente
           if (isAutocomplete) return true;
           const isPoi = ['shop', 'tourism', 'leisure', 'amenity'].includes(item.class);
           return !isPoi; 
@@ -216,4 +199,3 @@ class GeocodeOrchestrator {
 }
 
 module.exports = new GeocodeOrchestrator();
-

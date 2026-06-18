@@ -1,0 +1,64 @@
+====================================================
+  SIMAC - Sistema de Inteligência e Monitoramento
+         de Ação Comunitária  |  v2.0
+====================================================
+
+PRÉ-REQUISITOS:
+  - Node.js 18+ instalado (https://nodejs.org)
+  - MySQL 8.0+ rodando localmente
+  - Usuário MySQL: root / senha: root (padrão)
+    (pode alterar no arquivo .env)
+
+====================================================
+COMO INICIAR O SISTEMA:
+====================================================
+
+1. Abra o terminal (Prompt de Comando ou PowerShell)
+   na pasta onde este arquivo está.
+
+2. Execute:
+     node iniciar.js
+
+   O sistema irá automaticamente:
+   - Instalar dependências (npm install)
+   - Criar o banco de dados "simac"
+   - Criar todas as tabelas necessárias
+   - Carregar os dados GeoJSON iniciais
+   - Iniciar o servidor na porta 8200
+
+3. Acesse no navegador:
+     http://localhost:8200
+
+====================================================
+LOGIN PADRÃO:
+====================================================
+  Usuário: admin
+  Senha:   admin2026
+
+====================================================
+CONFIGURAÇÃO DO BANCO DE DADOS (.env):
+====================================================
+  Edite o arquivo .env para configurar:
+  - DB_HOST      → servidor MySQL (padrão: localhost)
+  - DB_USER      → usuário MySQL (padrão: root)
+  - DB_PASSWORD  → senha MySQL   (padrão: root)
+  - DB_NAME      → nome do banco (padrão: simac)
+  - PORT         → porta do sistema (padrão: 8200)
+
+====================================================
+ESTRUTURA DE ARQUIVOS IMPORTANTES:
+====================================================
+  iniciar.js    → Inicialização completa (use este)
+  server.js     → Servidor Express (não use diretamente)
+  .env          → Configurações de ambiente
+  index.html    → Frontend principal
+  login.html    → Página de login
+  geojson_comunidades/ → Base GeoJSON original (seed)
+
+====================================================
+SUPORTE:
+====================================================
+  Sistema desenvolvido pela equipe técnica da
+  Gerência de Ação Comunitária — OGM / Duque de Caxias
+  Ano: 2026
+====================================================
