@@ -16,6 +16,9 @@ const errorHandler = require('./src/middlewares/errorHandler');
 const app = express();
 const PORT = process.env.PORT || 8200;
 
+// Configurar Express para confiar nos proxies (necessário para ler o IP real atrás de Nginx/PM2)
+app.set('trust proxy', 1);
+
 // ── Middlewares Globais de Segurança ─────────────────────────────────────────
 app.use(helmet({
   contentSecurityPolicy: false, // Permite carregar Leaflet e fontes externas sem CSP complexa local
@@ -40,6 +43,7 @@ app.get('/', (req, res) => res.redirect('/login.html'));
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 200,
+  trustProxy: true,
   message: { error: 'Excesso de requisições. Por favor, aguarde alguns minutos.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -48,6 +52,7 @@ const apiLimiter = rateLimit({
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
+  trustProxy: true,
   message: { error: 'Muitas tentativas de login. Aguarde 15 minutos.' },
   standardHeaders: true,
   legacyHeaders: false,
